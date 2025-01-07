@@ -22,7 +22,7 @@ func TestFRGBA_RGBA(t *testing.T) {
 		want want
 	}{
 		{
-			name: "rgba(0.3,0.6,1.0,0.5)",
+			name: "(0.3,0.6,1.0,0.5)",
 			args: args{
 				c: FRGBA{0.3, 0.6, 1.0, 0.5},
 			},
@@ -61,7 +61,7 @@ func TestFRGBA_R(t *testing.T) {
 		want want
 	}{
 		{
-			name: "rgba(0.3,0.6,1.0,0.5)",
+			name: "(0.3,0.6,1.0,0.5)",
 			args: args{
 				c: FRGBA{0.3, 0.6, 1.0, 0.5},
 			},
@@ -94,7 +94,7 @@ func TestFRGBA_G(t *testing.T) {
 		want want
 	}{
 		{
-			name: "rgba(0.3,0.6,1.0,0.5)",
+			name: "(0.3,0.6,1.0,0.5)",
 			args: args{
 				c: FRGBA{0.3, 0.6, 1.0, 0.5},
 			},
@@ -127,7 +127,7 @@ func TestFRGBA_B(t *testing.T) {
 		want want
 	}{
 		{
-			name: "rgba(0.3,0.6,1.0,0.5)",
+			name: "(0.3,0.6,1.0,0.5)",
 			args: args{
 				c: FRGBA{0.3, 0.6, 1.0, 0.5},
 			},
@@ -160,7 +160,7 @@ func TestFRGBA_A(t *testing.T) {
 		want want
 	}{
 		{
-			name: "rgba(0.3,0.6,1.0,0.5)",
+			name: "(0.3,0.6,1.0,0.5)",
 			args: args{
 				c: FRGBA{0.3, 0.6, 1.0, 0.5},
 			},
@@ -193,7 +193,7 @@ func TestFRGBA_Strict(t *testing.T) {
 		want want
 	}{
 		{
-			name: "rgba(-0.3,1.6,1.0,0.5)",
+			name: "(-0.3,1.6,1.0,0.5)",
 			args: args{
 				c: FRGBA{-0.3, 1.6, 1.0, 0.5},
 			},
@@ -226,7 +226,7 @@ func TestFRGBA_Premul(t *testing.T) {
 		want want
 	}{
 		{
-			name: "rgba(0.3,0.6,1.0,0.5)",
+			name: "(0.3,0.6,1.0,0.5)",
 			args: args{
 				c: FRGBA{0.3, 0.6, 1.0, 0.5},
 			},
@@ -260,7 +260,7 @@ func TestFRGBA_Round(t *testing.T) {
 		want want
 	}{
 		{
-			name: "rgba(-0.345,1.678,1.0,0.5);1",
+			name: "(-0.345,1.678,1.0,0.5);1",
 			args: args{
 				c: FRGBA{-0.345, 1.678, 1.0, 0.5},
 				n: 1,
@@ -294,7 +294,7 @@ func TestFRGBA_ToRGBA(t *testing.T) {
 		want want
 	}{
 		{
-			name: "rgba(0.3,0.6,1.0,0.5)",
+			name: "(0.3,0.6,1.0,0.5)",
 			args: args{
 				c: FRGBA{0.3, 0.6, 1.0, 0.5},
 			},

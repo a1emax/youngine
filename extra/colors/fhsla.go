@@ -11,7 +11,7 @@ type FHSLA [4]basic.Float
 
 // String implements the [fmt.Stringer] interface.
 func (c FHSLA) String() string {
-	return fmt.Sprintf("hsla(%g, %g, %g, %g)", c[0], c[1], c[2], c[3])
+	return fmt.Sprintf("(%g, %g, %g, %g)", c[0], c[1], c[2], c[3])
 }
 
 // RGBA implements the [color.Color] interface.

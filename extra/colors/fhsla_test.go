@@ -22,7 +22,7 @@ func TestFHSLA_RGBA(t *testing.T) {
 		want want
 	}{
 		{
-			name: "hsla(214.29,1.0,0.65,0.5)",
+			name: "(214.29,1.0,0.65,0.5)",
 			args: args{
 				c: FHSLA{214.29, 1.0, 0.65, 0.5},
 			},
@@ -61,7 +61,7 @@ func TestFHSLA_H(t *testing.T) {
 		want want
 	}{
 		{
-			name: "hsla(214.29,1.0,0.65,0.5)",
+			name: "(214.29,1.0,0.65,0.5)",
 			args: args{
 				c: FHSLA{214.29, 1.0, 0.65, 0.5},
 			},
@@ -94,7 +94,7 @@ func TestFHSLA_S(t *testing.T) {
 		want want
 	}{
 		{
-			name: "hsla(214.29,1.0,0.65,0.5)",
+			name: "(214.29,1.0,0.65,0.5)",
 			args: args{
 				c: FHSLA{214.29, 1.0, 0.65, 0.5},
 			},
@@ -127,7 +127,7 @@ func TestFHSLA_L(t *testing.T) {
 		want want
 	}{
 		{
-			name: "hsla(214.29,1.0,0.65,0.5)",
+			name: "(214.29,1.0,0.65,0.5)",
 			args: args{
 				c: FHSLA{214.29, 1.0, 0.65, 0.5},
 			},
@@ -160,7 +160,7 @@ func TestFHSLA_A(t *testing.T) {
 		want want
 	}{
 		{
-			name: "hsla(214.29,1.0,0.65,0.5)",
+			name: "(214.29,1.0,0.65,0.5)",
 			args: args{
 				c: FHSLA{214.29, 1.0, 0.65, 0.5},
 			},
@@ -193,7 +193,7 @@ func TestFHSLA_Strict(t *testing.T) {
 		want want
 	}{
 		{
-			name: "hsla(-214.29,1.0,1.65,0.5)",
+			name: "(-214.29,1.0,1.65,0.5)",
 			args: args{
 				c: FHSLA{-214.29, 1.0, 1.65, 0.5},
 			},
@@ -227,7 +227,7 @@ func TestFHSLA_Round(t *testing.T) {
 		want want
 	}{
 		{
-			name: "hsla(-214.29,1.0,1.65,0.5)",
+			name: "(-214.29,1.0,1.65,0.5)",
 			args: args{
 				c: FHSLA{-214.29, 1.0, 1.65, 0.5},
 				n: 1,
@@ -261,7 +261,7 @@ func TestFHSLA_ToFRGBA(t *testing.T) {
 		want want
 	}{
 		{
-			name: "hsla(214.29,1.0,0.65,0.5)",
+			name: "(214.29,1.0,0.65,0.5)",
 			args: args{
 				c: FHSLA{214.29, 1.0, 0.65, 0.5},
 			},
