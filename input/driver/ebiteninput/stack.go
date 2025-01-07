@@ -14,20 +14,20 @@ type Stack interface {
 	Update()
 }
 
-// systemImpl is the implementation of the [Stack] interface.
-type systemImpl struct {
+// stackImpl is the implementation of the [Stack] interface.
+type stackImpl struct {
 	keyboard    Keyboard
 	mouse       Mouse
 	touchscreen Touchscreen
 }
 
-// NewSystem initializes and returns new [Stack].
-func NewSystem(nower tempo.Nower) Stack {
+// NewStack initializes and returns new [Stack].
+func NewStack(nower tempo.Nower) Stack {
 	if nower == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
-	return &systemImpl{
+	return &stackImpl{
 		keyboard:    NewKeyboard(nower),
 		mouse:       NewMouse(nower),
 		touchscreen: NewTouchscreen(nower),
@@ -35,29 +35,29 @@ func NewSystem(nower tempo.Nower) Stack {
 }
 
 // Keyboard implements the [input.Stack] interface.
-func (s *systemImpl) Keyboard() input.Keyboard {
+func (s *stackImpl) Keyboard() input.Keyboard {
 	return s.keyboard
 }
 
 // Mouse implements the [input.Stack] interface.
-func (s *systemImpl) Mouse() input.Mouse {
+func (s *stackImpl) Mouse() input.Mouse {
 	return s.mouse
 }
 
 // Touchscreen implements the [input.Stack] interface.
-func (s *systemImpl) Touchscreen() input.Touchscreen {
+func (s *stackImpl) Touchscreen() input.Touchscreen {
 	return s.touchscreen
 }
 
 // Mark implements the [input.Stack] interface.
-func (s *systemImpl) Mark() {
+func (s *stackImpl) Mark() {
 	s.keyboard.Mark()
 	s.mouse.Mark()
 	s.touchscreen.Mark()
 }
 
 // Update implements the [Stack] interface.
-func (s *systemImpl) Update() {
+func (s *stackImpl) Update() {
 	s.keyboard.Update()
 	s.mouse.Update()
 	s.touchscreen.Update()
