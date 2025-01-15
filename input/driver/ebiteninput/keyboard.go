@@ -1,9 +1,9 @@
 package ebiteninput
 
 import (
+	"github.com/a1emax/youngine/clock"
 	"github.com/a1emax/youngine/fault"
 	"github.com/a1emax/youngine/input"
-	"github.com/a1emax/youngine/tempo"
 )
 
 // Keyboard state based on Ebitengine.
@@ -20,15 +20,15 @@ type keyboardImpl struct {
 }
 
 // NewKeyboard initializes and returns new [Keyboard].
-func NewKeyboard(nower tempo.Nower) Keyboard {
-	if nower == nil {
+func NewKeyboard(clk clock.Clock) Keyboard {
+	if clk == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
 	k := &keyboardImpl{}
 
 	for i := range k.keys {
-		k.keys[i] = NewKeyboardKey(input.KeyboardKeyCode(i+1), nower)
+		k.keys[i] = NewKeyboardKey(input.KeyboardKeyCode(i+1), clk)
 	}
 
 	return k

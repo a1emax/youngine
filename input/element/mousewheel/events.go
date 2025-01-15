@@ -12,7 +12,7 @@ type ScrollEvent[B any] struct {
 	Offset basic.Vec2
 }
 
-// Background of input handled by slave.
+// Background of slave.
 type Background[B any] struct {
 	Background B
 

@@ -1,9 +1,9 @@
 package ebiteninput
 
 import (
+	"github.com/a1emax/youngine/clock"
 	"github.com/a1emax/youngine/fault"
 	"github.com/a1emax/youngine/input"
-	"github.com/a1emax/youngine/tempo"
 )
 
 // Mouse state based on Ebitengine.
@@ -22,15 +22,15 @@ type mouseImpl struct {
 }
 
 // NewMouse initializes and returns new [Mouse].
-func NewMouse(nower tempo.Nower) Mouse {
-	if nower == nil {
+func NewMouse(clk clock.Clock) Mouse {
+	if clk == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
 	m := &mouseImpl{}
 
 	for i := range m.buttons {
-		m.buttons[i] = NewMouseButton(input.MouseButtonCode(i+1), nower)
+		m.buttons[i] = NewMouseButton(input.MouseButtonCode(i+1), clk)
 	}
 	m.cursor = NewMouseCursor()
 	m.wheel = NewMouseWheel()

@@ -3,8 +3,8 @@ package scene
 // Element of scene placed on screen of type S inside region of type R.
 //
 // Element can be in one of following statuses:
-//   - Operated: element is displayed and interacts;
-//   - Visible: element is displayed, but does not interact;
+//   - Interactive: element is displayed and interacts;
+//   - Visible: element is displayed, but may not interact (interactive elements are visible);
 //   - Hidden: element is not displayed and does not interact.
 type Element[S any, R Region] interface {
 
@@ -32,7 +32,7 @@ type Element[S any, R Region] interface {
 
 	// Prepare prepares element, e.g. by precalculating some parameters.
 	//
-	// NOTE that containers should prepare operated and visible items and exclude hidden ones at this stage.
+	// NOTE that containers should prepare visible items and exclude hidden ones at this stage.
 	Prepare()
 
 	// Exclude excludes element, e.g. by cleaning up some resources for idle time.
@@ -42,12 +42,12 @@ type Element[S any, R Region] interface {
 
 	// Arrange arranges element, e.g. by executing layout algorithm.
 	//
-	// NOTE that containers should arrange operated and visible items at this stage.
+	// NOTE that containers should arrange visible items at this stage.
 	Arrange()
 
 	// Actuate actuates element, e.g. by handling input.
 	//
-	// NOTE that containers should actuate operated items and inhibit visible and hidden ones at this stage.
+	// NOTE that containers should actuate interactive items and inhibit other ones at this stage.
 	//
 	// NOTE that containers should iterate through items in reverse order at this stage.
 	Actuate()
@@ -61,12 +61,12 @@ type Element[S any, R Region] interface {
 
 	// Update updates element.
 	//
-	// NOTE that containers should update operated and visible items at this stage.
+	// NOTE that containers should update visible items at this stage.
 	Update()
 
 	// Draw draws element on given screen.
 	//
-	// NOTE that containers should draw operated and visible items at this stage.
+	// NOTE that containers should draw visible items at this stage.
 	Draw(screen S)
 
 	// Dispose disposes element.

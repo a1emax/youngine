@@ -6,7 +6,7 @@ import (
 	"github.com/a1emax/youngine/fault"
 )
 
-// Buffer holds instance of store data of type T for non-concurrent use.
+// Buffer holds instance of store data of type T for NON-concurrent use.
 type Buffer[T any] interface {
 
 	// Data returns data.

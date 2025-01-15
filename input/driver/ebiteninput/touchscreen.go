@@ -2,9 +2,9 @@ package ebiteninput
 
 import (
 	"github.com/a1emax/youngine/basic"
+	"github.com/a1emax/youngine/clock"
 	"github.com/a1emax/youngine/fault"
 	"github.com/a1emax/youngine/input"
-	"github.com/a1emax/youngine/tempo"
 )
 
 // Touchscreen state based on Ebitengine.
@@ -22,13 +22,13 @@ type touchscreenImpl struct {
 }
 
 // NewTouchscreen initializes and returns new [Touchscreen].
-func NewTouchscreen(nower tempo.Nower) Touchscreen {
-	if nower == nil {
+func NewTouchscreen(clk clock.Clock) Touchscreen {
+	if clk == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
 	return &touchscreenImpl{
-		helper: newTouchscreenHelper(nower),
+		helper: newTouchscreenHelper(clk),
 	}
 }
 
