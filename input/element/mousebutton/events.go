@@ -1,7 +1,7 @@
 package mousebutton
 
 import (
-	"github.com/a1emax/youngine/tempo"
+	"github.com/a1emax/youngine/clock"
 )
 
 // DownEvent occurs when button has just been pressed.
@@ -14,7 +14,7 @@ type PressEvent[B any] struct {
 	Background B
 
 	// Duration specifies number of ticks, including current one, during which button is pressed.
-	Duration tempo.Ticks
+	Duration clock.Ticks
 }
 
 // UpEvent occurs when button has just been released.
@@ -26,10 +26,10 @@ type UpEvent[B any] struct {
 type GoneEvent struct {
 }
 
-// Background of input handled by slave.
+// Background of slave.
 type Background[B any] struct {
 	Background B
 
 	// Duration specifies number of ticks, including current one, during which button is pressed.
-	Duration tempo.Ticks
+	Duration clock.Ticks
 }

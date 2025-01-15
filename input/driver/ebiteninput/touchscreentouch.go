@@ -2,14 +2,14 @@ package ebiteninput
 
 import (
 	"github.com/a1emax/youngine/basic"
+	"github.com/a1emax/youngine/clock"
 	"github.com/a1emax/youngine/input"
-	"github.com/a1emax/youngine/tempo"
 )
 
 // touchscreenTouchImpl is the implementation of the [input.TouchscreenTouch] interface.
 type touchscreenTouchImpl struct {
 	id        input.TouchscreenTouchID
-	startedAt tempo.Time
+	startedAt clock.Time
 	position  basic.Vec2
 	isMarked  bool
 }
@@ -20,7 +20,7 @@ func (t *touchscreenTouchImpl) ID() input.TouchscreenTouchID {
 }
 
 // StartedAt implements the [input.TouchscreenTouch] interface.
-func (t *touchscreenTouchImpl) StartedAt() tempo.Time {
+func (t *touchscreenTouchImpl) StartedAt() clock.Time {
 	return t.startedAt
 }
 

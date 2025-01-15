@@ -8,7 +8,9 @@ import (
 	"github.com/a1emax/youngine/fault"
 )
 
-// Syncer syncs (maybe concurrently) data of type T with store.
+// Syncer syncs data of type T with store.
+//
+// Syncer can be used concurrently.
 type Syncer[T any] interface {
 
 	// Load reads data from store and writes it to associated locker.

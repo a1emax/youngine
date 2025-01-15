@@ -5,12 +5,13 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 
-	"github.com/a1emax/youngine/tempo"
+	"github.com/a1emax/youngine/clock"
+	"github.com/a1emax/youngine/clock/driver/ebitenclock"
 )
 
 // touchscreenHelper represents touchscreen state for internal purposes.
 type touchscreenHelper struct {
-	nower tempo.Nower
+	clock clock.Clock
 
 	touchIDs      []ebiten.TouchID
 	touches       []touchscreenHelperTouch
@@ -26,15 +27,15 @@ type touchscreenHelper struct {
 type touchscreenHelperTouch struct {
 	id        ebiten.TouchID
 	x, y      int
-	startedAt tempo.Time
-	changedAt tempo.Time
-	exposedAt tempo.Time
+	startedAt clock.Time
+	changedAt clock.Time
+	exposedAt clock.Time
 }
 
 // newTouchscreenHelper initializes and returns new touchscreenHelper.
-func newTouchscreenHelper(nower tempo.Nower) touchscreenHelper {
+func newTouchscreenHelper(clk clock.Clock) touchscreenHelper {
 	return touchscreenHelper{
-		nower:          nower,
+		clock:          clk,
 		appendTouchIDs: ebiten.AppendTouchIDs,
 		touchPosition:  ebiten.TouchPosition,
 	}
@@ -44,8 +45,8 @@ func newTouchscreenHelper(nower tempo.Nower) touchscreenHelper {
 // "hang". Here it is assumed that if coordinates of touch did not change for more than safeTouchscreenTouchDuration,
 // then it "hung" and should not be exposed until its coordinates are changed (if they are ever changed).
 const (
-	safeTouchscreenTouchCount                = 2
-	safeTouchscreenTouchDuration tempo.Ticks = 2 * ebiten.DefaultTPS
+	safeTouchscreenTouchCount    = 2
+	safeTouchscreenTouchDuration = 2 * ebitenclock.Second
 )
 
 // update updates state.
@@ -61,7 +62,7 @@ func (t *touchscreenHelper) update() {
 		t.maxTouchCount = max(len(t.touchIDs), t.maxTouchCount)
 	}
 
-	now := t.nower.Now()
+	now := t.clock.Now()
 
 	t.prevTouches, t.touches = t.touches, t.prevTouches[:0]
 	prevTouchIndex := 0
@@ -93,7 +94,7 @@ func (t *touchscreenHelper) update() {
 			if t.maxTouchCount > safeTouchscreenTouchCount &&
 				now.Sub(touch.changedAt)+1 > safeTouchscreenTouchDuration {
 
-				touch.exposedAt = tempo.Time{}
+				touch.exposedAt = clock.Time{}
 			} else {
 				touch.exposedAt = prevTouch.exposedAt
 				if touch.exposedAt.IsZero() {

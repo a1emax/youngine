@@ -2,7 +2,7 @@ package input
 
 import (
 	"github.com/a1emax/youngine/basic"
-	"github.com/a1emax/youngine/tempo"
+	"github.com/a1emax/youngine/clock"
 )
 
 // TouchscreenTouch state.
@@ -12,7 +12,7 @@ type TouchscreenTouch interface {
 	ID() TouchscreenTouchID
 
 	// StartedAt returns time of start of touch.
-	StartedAt() tempo.Time
+	StartedAt() clock.Time
 
 	// Position returns position of touch.
 	Position() basic.Vec2

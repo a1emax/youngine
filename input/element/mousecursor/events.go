@@ -24,7 +24,7 @@ type HoverEvent[B any] struct {
 type LeaveEvent struct {
 }
 
-// Background of input handled by slave.
+// Background of slave.
 type Background[B any] struct {
 	Background B
 
