@@ -14,7 +14,7 @@ See [demo project](https://github.com/a1emax/dragon).
 
 ## Licence
 
-Youngine is licensed under Apache license version 2.0. See [LICENSE](https://github.com/a1emax/youngine/blob/main/LICENSE) file.
+Youngine is licensed under Apache License, Version 2.0. See [LICENSE](https://github.com/a1emax/youngine/blob/main/LICENSE) file.
 
 ## Thanks
 
