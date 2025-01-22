@@ -4,7 +4,7 @@ import (
 	"github.com/a1emax/youngine/clock"
 )
 
-// Clock of logical time based on Ebitengine.
+// Clock of logical time based on Ebitengine TPS.
 type Clock interface {
 	clock.Clock
 
