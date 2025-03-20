@@ -16,7 +16,7 @@ type Keyboard interface {
 
 // keyboardImpl is the implementation of the [Keyboard] interface.
 type keyboardImpl struct {
-	keys [input.KeyboardKeyCount]KeyboardKey
+	keys [input.KeyboardKeyCount]keyboardKeyImpl
 }
 
 // NewKeyboard initializes and returns new [Keyboard].
@@ -26,12 +26,16 @@ func NewKeyboard(clk clock.Clock) Keyboard {
 	}
 
 	k := &keyboardImpl{}
-
-	for i := range k.keys {
-		k.keys[i] = NewKeyboardKey(input.KeyboardKeyCode(i+1), clk)
-	}
+	k.init(clk)
 
 	return k
+}
+
+// init initializes [Keyboard].
+func (k *keyboardImpl) init(clk clock.Clock) {
+	for i := range k.keys {
+		k.keys[i].init(input.KeyboardKeyCode(i+1), clk)
+	}
 }
 
 // Key implements the [input.Keyboard] interface.
@@ -40,7 +44,7 @@ func (k *keyboardImpl) Key(code input.KeyboardKeyCode) input.KeyboardKey {
 		panic(fault.Trace(fault.ErrInvalidArgument))
 	}
 
-	return k.keys[code-1]
+	return &k.keys[code-1]
 }
 
 // Mark implements the [input.Keyboard] interface.

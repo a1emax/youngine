@@ -5,39 +5,40 @@ import (
 	"github.com/a1emax/youngine/clock"
 )
 
-// StartEvent occurs when touch has just been started inside active area.
-type StartEvent[B any] struct {
+// DownEvent occurs when touch has just been detected.
+type DownEvent[B any] struct {
 	Background B
+
+	// JustStarted reports whether touch has just been started.
+	JustStarted bool
 
 	// Position of touch.
 	Position basic.Vec2
 }
 
-// HoverEvent occurs when touch is inside active area.
+// HoverEvent occurs when touch is detected.
 type HoverEvent[B any] struct {
 	Background B
 
-	// Duration specifies number of ticks, including current one, during which touch is inside active area.
+	// Duration specifies number of ticks, including current one, that have passed since touch was detected.
 	Duration clock.Ticks
 
 	// Position of touch.
 	Position basic.Vec2
 }
 
-// EndEvent occurs when touch has just been ended inside active area.
-type EndEvent[B any] struct {
-	Background B
-}
+// UpEvent occurs when touch has just been lost.
+type UpEvent struct {
 
-// GoneEvent occurs when touch has just gone.
-type GoneEvent struct {
+	// JustEnded reports whether touch has just been ended (from controller's point of view).
+	JustEnded bool
 }
 
 // Background of slave.
 type Background[B any] struct {
 	Background B
 
-	// Duration specifies number of ticks, including current one, during which touch is inside region.
+	// Duration specifies number of ticks, including current one, that have passed since touch was detected.
 	Duration clock.Ticks
 
 	// Position of touch.

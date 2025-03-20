@@ -2,6 +2,7 @@ package basic
 
 import (
 	"math"
+	"reflect"
 	"testing"
 )
 
@@ -846,6 +847,177 @@ func TestMod__Int(t *testing.T) {
 	}
 }
 
+func TestLoop__Int(t *testing.T) {
+	type args struct {
+		x    []int
+		low  int
+		high int
+	}
+	type want struct {
+		result []int
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "0",
+			args: args{
+				x:    []int{-2, -1, 0, 1, 2},
+				low:  0,
+				high: 0,
+			},
+			want: want{
+				result: []int{0, 0, 0, 0, 0},
+			},
+		},
+		{
+			name: "2",
+			args: args{
+				x:    []int{-2, -1, 0, 1, 2, 3, 4},
+				low:  3,
+				high: 3,
+			},
+			want: want{
+				result: []int{3, 3, 3, 3, 3, 3, 3},
+			},
+		},
+		{
+			name: "3",
+			args: args{
+				x:    []int{-2, -1, 0, 1, 2, 3, 4, 5},
+				low:  3,
+				high: 3,
+			},
+			want: want{
+				result: []int{3, 3, 3, 3, 3, 3, 3, 3},
+			},
+		},
+		{
+			name: "[0,3]",
+			args: args{
+				x:    []int{-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+				low:  0,
+				high: 3,
+			},
+			want: want{
+				result: []int{0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3},
+			},
+		},
+		{
+			name: "[3,5]",
+			args: args{
+				x:    []int{-6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+				low:  3,
+				high: 5,
+			},
+			want: want{
+				result: []int{3, 4, 5, 3, 4, 5, 3, 4, 5, 3, 4, 5, 3, 4, 5, 3, 4, 5},
+			},
+		},
+		{
+			name: "-2",
+			args: args{
+				x:    []int{-4, -3, -2, -1, 0, 1, 2},
+				low:  -2,
+				high: -2,
+			},
+			want: want{
+				result: []int{-2, -2, -2, -2, -2, -2, -2},
+			},
+		},
+		{
+			name: "-3",
+			args: args{
+				x:    []int{-5, -4, -3, -2, -1, 0, 1, 2},
+				low:  -3,
+				high: -3,
+			},
+			want: want{
+				result: []int{-3, -3, -3, -3, -3, -3, -3, -3},
+			},
+		},
+		{
+			name: "[-4,-1]",
+			args: args{
+				x:    []int{-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7},
+				low:  -4,
+				high: -1,
+			},
+			want: want{
+				result: []int{-4, -3, -2, -1, -4, -3, -2, -1, -4, -3, -2, -1, -4, -3, -2, -1, -4, -3, -2, -1},
+			},
+		},
+		{
+			name: "[-4,-2]",
+			args: args{
+				x:    []int{-10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7},
+				low:  -4,
+				high: -2,
+			},
+			want: want{
+				result: []int{-4, -3, -2, -4, -3, -2, -4, -3, -2, -4, -3, -2, -4, -3, -2, -4, -3, -2},
+			},
+		},
+		{
+			name: "[-1,1]",
+			args: args{
+				x:    []int{-7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7},
+				low:  -1,
+				high: 1,
+			},
+			want: want{
+				result: []int{-1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1},
+			},
+		},
+		{
+			name: "[1,-1]",
+			args: args{
+				x:    []int{-3, -2, -1, 0, 1, 2, 3},
+				low:  1,
+				high: -1,
+			},
+			want: want{
+				result: []int{1, 1, 1, 1, 1, 1, 1},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := make([]int, len(tt.args.x))
+			for i := 0; i < len(tt.args.x); i++ {
+				result[i] = Loop(tt.args.x[i], tt.args.low, tt.args.high)
+			}
+			if !reflect.DeepEqual(result, tt.want.result) {
+				t.Fatalf("(%d expected, got %d", tt.want.result, result)
+			}
+		})
+	}
+}
+
+func TestMaxInt__Int(t *testing.T) {
+	result := MaxInt[int]()
+	if wantResult := math.MaxInt; result != wantResult {
+		t.Fatalf("%d expected, got %d", wantResult, result)
+	}
+}
+
+func TestMaxUint__Uint(t *testing.T) {
+	result := MaxUint[uint]()
+	if wantResult := uint(math.MaxUint); result != wantResult {
+		t.Fatalf("%d expected, got %d", wantResult, result)
+	}
+}
+
+func TestMinInt__Int(t *testing.T) {
+	result := MinInt[int]()
+	if wantResult := math.MinInt; result != wantResult {
+		t.Fatalf("%d expected, got %d", wantResult, result)
+	}
+}
+
 func TestMod__Uint(t *testing.T) {
 	type args struct {
 		x uint
@@ -1023,27 +1195,6 @@ func TestMod__Float(t *testing.T) {
 				t.Fatalf("%g expected, got %g", tt.want.result, result)
 			}
 		})
-	}
-}
-
-func TestMaxInt__Int(t *testing.T) {
-	result := MaxInt[int]()
-	if wantResult := math.MaxInt; result != wantResult {
-		t.Fatalf("%d expected, got %d", wantResult, result)
-	}
-}
-
-func TestMaxUint__Uint(t *testing.T) {
-	result := MaxUint[uint]()
-	if wantResult := uint(math.MaxUint); result != wantResult {
-		t.Fatalf("%d expected, got %d", wantResult, result)
-	}
-}
-
-func TestMinInt__Int(t *testing.T) {
-	result := MinInt[int]()
-	if wantResult := math.MinInt; result != wantResult {
-		t.Fatalf("%d expected, got %d", wantResult, result)
 	}
 }
 

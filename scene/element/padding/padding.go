@@ -1,88 +1,89 @@
 package padding
 
 import (
+	"github.com/a1emax/youngine/basic"
 	"github.com/a1emax/youngine/fault"
 	"github.com/a1emax/youngine/scene"
 )
 
-// Padding of element placed on screen of type S inside region of type R.
-type Padding[S any, R scene.Region] interface {
-	scene.Element[S, R]
+// Padding of element displayed on screen of type S and extended by trait of type T.
+type Padding[S, T any] interface {
+	scene.Element[S, T]
 }
 
 // paddingImpl is the implementation of the [Padding] interface.
-type paddingImpl[S any, R scene.Region] struct {
-	scene.BaseElement[S, R]
+type paddingImpl[S, T any] struct {
+	scene.BaseElement[S, T, basic.None]
 
-	region  R
-	element Element[S]
-
-	outline         scene.Outline
+	attrs           scene.Attrs
 	containerLayout containerLayout
+	element         Element[S]
 	elementLayout   elementLayout
 }
 
 // New initializes and returns new [Padding].
-func New[S any, R scene.Region](region R, element Element[S]) Padding[S, R] {
+func New[S, T any](traitFunc scene.TraitFunc[T], element Element[S]) Padding[S, T] {
+	if traitFunc == nil {
+		panic(fault.Trace(fault.ErrNilPointer))
+	}
 	if element == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
-	return &paddingImpl[S, R]{
-		region:  region,
-		element: element,
-	}
+	p := &paddingImpl[S, T]{}
+	p.Init(traitFunc, func(basic.None) basic.None {
+		return basic.None{}
+	})
+
+	p.element = element
+
+	return p
 }
 
-// Region implements the [scene.Element] interface.
-func (p *paddingImpl[S, R]) Region() R {
-	return p.region
+// IsOff implements the [scene.Element] interface.
+func (p *paddingImpl[S, T]) IsOff() bool {
+	return p.element.IsOff()
 }
 
-// IsActive implements the [scene.Element] interface.
-func (p *paddingImpl[S, R]) IsActive() bool {
-	return p.element.IsActive()
-}
-
-// Outline implements the [scene.Element] interface.
-func (p *paddingImpl[S, R]) Outline() scene.Outline {
-	return p.outline
+// Attrs implements the [scene.Element] interface.
+func (p *paddingImpl[S, T]) Attrs() scene.Attrs {
+	return p.attrs
 }
 
 // Refresh implements the [scene.Element] interface.
-func (p *paddingImpl[S, R]) Refresh() {
-	p.outline = scene.Outline{}
+func (p *paddingImpl[S, T]) Refresh() {
+	p.BaseElement.Refresh()
+	p.attrs = scene.Attrs{}
 
-	p.element.Region().Refresh()
 	p.element.Refresh()
 }
 
 // Exclude implements the [scene.Element] interface.
-func (p *paddingImpl[S, R]) Exclude() {
+func (p *paddingImpl[S, T]) Exclude() {
 	p.element.Exclude()
 }
 
 // Actuate implements the [scene.Element] interface.
-func (p *paddingImpl[S, R]) Actuate() {
+func (p *paddingImpl[S, T]) Actuate() {
 	p.element.Actuate()
 }
 
 // Inhibit implements the [scene.Element] interface.
-func (p *paddingImpl[S, R]) Inhibit() {
+func (p *paddingImpl[S, T]) Inhibit() {
 	p.element.Inhibit()
 }
 
 // Update implements the [scene.Element] interface.
-func (p *paddingImpl[S, R]) Update() {
+func (p *paddingImpl[S, T]) Update() {
 	p.element.Update()
 }
 
 // Draw implements the [scene.Element] interface.
-func (p *paddingImpl[S, R]) Draw(screen S) {
+func (p *paddingImpl[S, T]) Draw(screen S) {
 	p.element.Draw(screen)
 }
 
 // Dispose implements the [scene.Element] interface.
-func (p *paddingImpl[S, R]) Dispose() {
+func (p *paddingImpl[S, T]) Dispose() {
 	p.element.Dispose()
 }

@@ -2,6 +2,7 @@ package mousecursor
 
 import (
 	"github.com/a1emax/youngine/basic"
+	"github.com/a1emax/youngine/clock"
 	"github.com/a1emax/youngine/fault"
 	"github.com/a1emax/youngine/input"
 )
@@ -14,8 +15,11 @@ type Controller[B any] interface {
 // ControllerConfig configures [Controller].
 type ControllerConfig[B any] struct {
 
-	// Cursor state.
-	Cursor input.MouseCursor
+	// Clock representing time.
+	Clock clock.Clock
+
+	// Input state.
+	Input input.MouseCursor
 
 	// HitTest, if specified, restricts active area cursor is being handled inside.
 	HitTest func(position basic.Vec2) bool
@@ -37,12 +41,13 @@ type ControllerConfig[B any] struct {
 type controllerImpl[B any] struct {
 	ControllerConfig[B]
 
-	cursorDetected bool
+	detected   bool
+	detectedAt clock.Time
 }
 
 // NewController initializes and returns new [Controller].
 func NewController[B any](config ControllerConfig[B]) Controller[B] {
-	if config.Cursor == nil {
+	if config.Input == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
@@ -53,55 +58,63 @@ func NewController[B any](config ControllerConfig[B]) Controller[B] {
 
 // Actuate implements the [input.Controller] interface.
 func (c *controllerImpl[B]) Actuate(background B) {
-	if !c.Cursor.IsAvailable() || c.Cursor.IsMarked() {
+	if !c.Input.IsAvailable() || c.Input.IsMarked() {
 		c.Inhibit()
 
 		return
 	}
 
-	cursorPosition := c.Cursor.Position()
-	if c.HitTest != nil && !c.HitTest(cursorPosition) {
+	position := c.Input.Position()
+	if c.HitTest != nil && !c.HitTest(position) {
 		c.Inhibit()
 
 		return
 	}
 
-	c.Cursor.Mark()
+	c.Input.Mark()
 
-	if !c.cursorDetected {
-		c.cursorDetected = true
+	now := c.Clock.Now()
+
+	var duration clock.Ticks
+	if c.detectedAt.IsZero() {
+		c.detectedAt = now
 
 		if c.OnEnter != nil {
 			c.OnEnter(EnterEvent[B]{
 				Background: background,
-				Position:   cursorPosition,
+				Position:   position,
 			})
 		}
+	} else {
+		duration = now.Sub(c.detectedAt)
 	}
+	duration++ // Starts from 1.
 
 	if c.OnHover != nil {
 		c.OnHover(HoverEvent[B]{
 			Background: background,
-			Position:   cursorPosition,
+			Duration:   duration,
+			Position:   position,
 		})
 	}
 
 	if c.Slave != nil {
 		c.Slave.Actuate(Background[B]{
 			Background: background,
-			Position:   cursorPosition,
+			Duration:   duration,
+			Position:   position,
 		})
 	}
 }
 
 // Inhibit implements the [input.Controller] interface.
 func (c *controllerImpl[B]) Inhibit() {
-	if c.cursorDetected {
+	if !c.detectedAt.IsZero() {
 		if c.OnLeave != nil {
 			c.OnLeave(LeaveEvent{})
 		}
 
-		c.cursorDetected = false
+		c.detectedAt = clock.Time{}
 	}
 
 	if c.Slave != nil {

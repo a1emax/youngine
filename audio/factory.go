@@ -8,6 +8,6 @@ type Factory interface {
 
 	// NewInstance initializes and returns new [Instance].
 	//
-	// NOTE that source should not be shared with other instances.
+	// Source should not be shared with other instances.
 	NewInstance(source Source, volumer Volumer) Instance
 }

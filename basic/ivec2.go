@@ -7,9 +7,19 @@ import (
 // Ivec2 is two-component vector of integer numbers.
 type Ivec2 [2]int
 
+// Ivec2Num returns vector with all components set to k.
+func Ivec2Num(k int) Ivec2 {
+	return Ivec2{k, k}
+}
+
 // String implements the [fmt.Stringer] interface.
 func (v Ivec2) String() string {
 	return fmt.Sprintf("(%d, %d)", v[0], v[1])
+}
+
+// Prec returns precise version of v.
+func (v Ivec2) Prec() Vec2 {
+	return Vec2{Float(v[0]), Float(v[1])}
 }
 
 // IsZero reports whether v is zero.
@@ -27,52 +37,67 @@ func (v Ivec2) Y() int {
 	return v[1]
 }
 
-// Abs returns absolute value of v.
+// Abs returns |v|.
 func (v Ivec2) Abs() Ivec2 {
 	return Ivec2{Abs(v[0]), Abs(v[1])}
 }
 
-// Neg returns v with inverted sign.
+// Neg returns -v.
 func (v Ivec2) Neg() Ivec2 {
 	return Ivec2{-v[0], -v[1]}
 }
 
-// Add returns sum of v and w.
+// Add returns v + w.
 func (v Ivec2) Add(w Ivec2) Ivec2 {
 	return Ivec2{v[0] + w[0], v[1] + w[1]}
 }
 
-// Sub returns difference of v and w.
+// AddNum returns v + k.
+func (v Ivec2) AddNum(k int) Ivec2 {
+	return Ivec2{v[0] + k, v[1] + k}
+}
+
+// Sub returns v - w.
 func (v Ivec2) Sub(w Ivec2) Ivec2 {
 	return Ivec2{v[0] - w[0], v[1] - w[1]}
 }
 
-// MulAll returns product of v and k.
-func (v Ivec2) MulAll(k int) Ivec2 {
-	return Ivec2{v[0] * k, v[1] * k}
+// SubNum returns v - k.
+func (v Ivec2) SubNum(k int) Ivec2 {
+	return Ivec2{v[0] - k, v[1] - k}
 }
 
-// Mul returns product of v and w.
+// Mul returns v * w.
 func (v Ivec2) Mul(w Ivec2) Ivec2 {
 	return Ivec2{v[0] * w[0], v[1] * w[1]}
 }
 
-// DivAll returns quotient of v and k.
-func (v Ivec2) DivAll(k int) Ivec2 {
-	return Ivec2{v[0] / k, v[1] / k}
+// MulNum returns v * k.
+func (v Ivec2) MulNum(k int) Ivec2 {
+	return Ivec2{v[0] * k, v[1] * k}
 }
 
-// Div returns quotient of v and w.
+// Div returns v / w.
 func (v Ivec2) Div(w Ivec2) Ivec2 {
 	return Ivec2{v[0] / w[0], v[1] / w[1]}
 }
 
-// ModAll returns v modulo k.
-func (v Ivec2) ModAll(k int) Ivec2 {
+// DivNum returns v / k.
+func (v Ivec2) DivNum(k int) Ivec2 {
+	return Ivec2{v[0] / k, v[1] / k}
+}
+
+// Mod returns v modulo w (see [Mod]).
+func (v Ivec2) Mod(w Ivec2) Ivec2 {
+	return Ivec2{Mod(v[0], w[0]), Mod(v[1], w[1])}
+}
+
+// ModNum returns v modulo k (see [Mod]).
+func (v Ivec2) ModNum(k int) Ivec2 {
 	return Ivec2{Mod(v[0], k), Mod(v[1], k)}
 }
 
-// Mod returns v modulo w.
-func (v Ivec2) Mod(w Ivec2) Ivec2 {
-	return Ivec2{Mod(v[0], w[0]), Mod(v[1], w[1])}
+// L1Norm returns L1 (Manhattan) norm of v.
+func (v Ivec2) L1Norm() int {
+	return Abs(v[0]) + Abs(v[1])
 }

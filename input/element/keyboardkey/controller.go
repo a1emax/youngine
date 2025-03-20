@@ -14,11 +14,11 @@ type Controller[B any] interface {
 // ControllerConfig configures [Controller].
 type ControllerConfig[B any] struct {
 
-	// Key state.
-	Key input.KeyboardKey
-
 	// Clock representing time.
 	Clock clock.Clock
+
+	// Input state.
+	Input input.KeyboardKey
 
 	// OnDown, if specified, is called on [DownEvent].
 	OnDown func(event DownEvent[B])
@@ -27,12 +27,9 @@ type ControllerConfig[B any] struct {
 	OnPress func(event PressEvent[B])
 
 	// OnUp, if specified, is called on [UpEvent].
-	OnUp func(event UpEvent[B])
+	OnUp func(event UpEvent)
 
-	// OnGone, if specified, is called on [GoneEvent].
-	OnGone func(event GoneEvent)
-
-	// Slave, if specified, is actuated if key is pressed, or inhibited otherwise.
+	// Slave, if specified, is actuated if key press is detected, or inhibited otherwise.
 	Slave input.Controller[Background[B]]
 }
 
@@ -40,15 +37,15 @@ type ControllerConfig[B any] struct {
 type controllerImpl[B any] struct {
 	ControllerConfig[B]
 
-	keyPressDetectedAt clock.Time
+	detectedAt clock.Time
 }
 
 // NewController initializes and returns new [Controller].
 func NewController[B any](config ControllerConfig[B]) Controller[B] {
-	if config.Key == nil {
+	if config.Clock == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
-	if config.Clock == nil {
+	if config.Input == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
@@ -59,56 +56,55 @@ func NewController[B any](config ControllerConfig[B]) Controller[B] {
 
 // Actuate implements the [input.Controller] interface.
 func (c *controllerImpl[B]) Actuate(background B) {
-	if c.Key.IsMarked() {
+	if c.Input.IsMarked() {
 		c.Inhibit()
 
 		return
 	}
 
-	c.Key.Mark()
+	c.Input.Mark()
 
 	now := c.Clock.Now()
 
-	if keyPressedAt := c.Key.PressedAt(); !keyPressedAt.IsZero() {
-		var keyPressDuration clock.Ticks
-		if c.keyPressDetectedAt.IsZero() {
-			c.keyPressDetectedAt = now
+	if pressedAt := c.Input.PressedAt(); !pressedAt.IsZero() {
+		var duration clock.Ticks
+		if c.detectedAt.IsZero() {
+			c.detectedAt = now
 
-			if keyPressedAt == now {
-				if c.OnDown != nil {
-					c.OnDown(DownEvent[B]{
-						Background: background,
-					})
-				}
+			if c.OnDown != nil {
+				c.OnDown(DownEvent[B]{
+					Background:  background,
+					JustPressed: pressedAt == now,
+				})
 			}
 		} else {
-			keyPressDuration = now.Sub(c.keyPressDetectedAt)
+			duration = now.Sub(c.detectedAt)
 		}
-		keyPressDuration++ // Starts from 1.
+		duration++ // Starts from 1.
 
 		if c.OnPress != nil {
 			c.OnPress(PressEvent[B]{
 				Background: background,
-				Duration:   keyPressDuration,
+				Duration:   duration,
 			})
 		}
 
 		if c.Slave != nil {
 			c.Slave.Actuate(Background[B]{
 				Background: background,
-				Duration:   keyPressDuration,
+				Duration:   duration,
 			})
 		}
 	} else {
-		if c.Key.ReleasedAt() == now {
+		if !c.detectedAt.IsZero() {
 			if c.OnUp != nil {
-				c.OnUp(UpEvent[B]{
-					Background: background,
+				c.OnUp(UpEvent{
+					JustReleased: c.Input.ReleasedAt() == now,
 				})
 			}
-		}
 
-		c.keyPressDetectedAt = clock.Time{}
+			c.detectedAt = clock.Time{}
+		}
 
 		if c.Slave != nil {
 			c.Slave.Inhibit()
@@ -118,13 +114,15 @@ func (c *controllerImpl[B]) Actuate(background B) {
 
 // Inhibit implements the [input.Controller] interface.
 func (c *controllerImpl[B]) Inhibit() {
-	if !c.keyPressDetectedAt.IsZero() {
-		if c.OnGone != nil {
-			c.OnGone(GoneEvent{})
+	if !c.detectedAt.IsZero() {
+		if c.OnUp != nil {
+			c.OnUp(UpEvent{
+				JustReleased: false,
+			})
 		}
-	}
 
-	c.keyPressDetectedAt = clock.Time{}
+		c.detectedAt = clock.Time{}
+	}
 
 	if c.Slave != nil {
 		c.Slave.Inhibit()

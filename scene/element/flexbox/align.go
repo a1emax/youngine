@@ -30,8 +30,3 @@ const (
 func (a Align) IsValid() bool {
 	return a >= minAlign && a <= maxAlign
 }
-
-// IsDefault reports whether value is default or invalid.
-func (a Align) IsDefault() bool {
-	return a == minAlign || !a.IsValid()
-}

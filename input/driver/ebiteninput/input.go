@@ -16,9 +16,9 @@ type Input interface {
 
 // inputImpl is the implementation of the [Input] interface.
 type inputImpl struct {
-	keyboard    Keyboard
-	mouse       Mouse
-	touchscreen Touchscreen
+	keyboard    keyboardImpl
+	mouse       mouseImpl
+	touchscreen touchscreenImpl
 }
 
 // New initializes and returns new [Input].
@@ -27,26 +27,27 @@ func New(clk clock.Clock) Input {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
-	return &inputImpl{
-		keyboard:    NewKeyboard(clk),
-		mouse:       NewMouse(clk),
-		touchscreen: NewTouchscreen(clk),
-	}
+	i := &inputImpl{}
+	i.keyboard.init(clk)
+	i.mouse.init(clk)
+	i.touchscreen.init(clk)
+
+	return i
 }
 
 // Keyboard implements the [input.Input] interface.
 func (i *inputImpl) Keyboard() input.Keyboard {
-	return i.keyboard
+	return &i.keyboard
 }
 
 // Mouse implements the [input.Input] interface.
 func (i *inputImpl) Mouse() input.Mouse {
-	return i.mouse
+	return &i.mouse
 }
 
 // Touchscreen implements the [input.Input] interface.
 func (i *inputImpl) Touchscreen() input.Touchscreen {
-	return i.touchscreen
+	return &i.touchscreen
 }
 
 // Mark implements the [input.Input] interface.

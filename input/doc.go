@@ -1,2 +1,2 @@
-// Package input provides tools for input handling, divided into state access protocol and hierarchical event generation.
+// Package input provides tools for customizable input handling.
 package input

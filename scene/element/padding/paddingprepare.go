@@ -6,19 +6,19 @@ import (
 )
 
 // Prepare implements the [scene.Element] interface.
-func (p *paddingImpl[S, R]) Prepare() {
-	p.outline = scene.Outline{}
-	ct := &p.outline
+func (p *paddingImpl[S, T]) Prepare() {
+	p.attrs = scene.Attrs{}
+	ct := &p.attrs
 
 	p.element.Prepare()
 
-	state := p.element.Region().State()
-	left := basic.FloorPoz(state.Left.Or(0))
-	top := basic.FloorPoz(state.Top.Or(0))
-	right := basic.FloorPoz(state.Right.Or(0))
-	bottom := basic.FloorPoz(state.Bottom.Or(0))
+	trait := p.element.Trait()
+	left := basic.FloorPoz(trait.Left.Or(0))
+	top := basic.FloorPoz(trait.Top.Or(0))
+	right := basic.FloorPoz(trait.Right.Or(0))
+	bottom := basic.FloorPoz(trait.Bottom.Or(0))
 
-	el := p.element.Outline()
+	el := p.element.Attrs()
 
 	minWidth := left + basic.FloorPoz(el.MinWidth.Or(0)) + right
 	minHeight := top + basic.FloorPoz(el.MinHeight.Or(0)) + bottom

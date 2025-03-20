@@ -12,15 +12,17 @@ import (
 //   - Both default preliminary sizes are indefinite.
 
 // Prepare implements the [scene.Element] interface.
-func (f *flexboxImpl[S, R]) Prepare() {
-	f.outline = scene.Outline{}
-	ct := &f.outline
+func (f *flexboxImpl[S, T]) Prepare() {
+	props := f.Props()
+
+	f.attrs = scene.Attrs{}
+	ct := &f.attrs
 
 	minWidth := 0.0
 	minHeight := 0.0
 
 	for _, item := range f.items {
-		if !item.IsActive() {
+		if item.IsOff() {
 			item.Exclude()
 
 			continue
@@ -28,9 +30,9 @@ func (f *flexboxImpl[S, R]) Prepare() {
 
 		item.Prepare()
 
-		it := item.Outline()
+		it := item.Attrs()
 
-		switch f.state.Direction {
+		switch props.Direction {
 		default: // DirectionRow or invalid:
 			minWidth += basic.FloorPoz(it.MinWidth.Or(0))
 			minHeight = max(minHeight, basic.FloorPoz(it.MinHeight.Or(0)))
@@ -40,29 +42,29 @@ func (f *flexboxImpl[S, R]) Prepare() {
 		}
 	}
 
-	minWidth = max(minWidth, basic.FloorPoz(f.state.MinWidth.Or(0)))
-	minHeight = max(minHeight, basic.FloorPoz(f.state.MinHeight.Or(0)))
+	minWidth = max(minWidth, basic.FloorPoz(props.MinWidth.Or(0)))
+	minHeight = max(minHeight, basic.FloorPoz(props.MinHeight.Or(0)))
 
 	ct.MinWidth = basic.SetOpt(minWidth)
 	ct.MinHeight = basic.SetOpt(minHeight)
 
-	if f.state.MaxWidth.IsSet() {
-		maxWidth := max(minWidth, basic.FloorPoz(f.state.MaxWidth.Get()))
+	if props.MaxWidth.IsSet() {
+		maxWidth := max(minWidth, basic.FloorPoz(props.MaxWidth.Get()))
 		ct.MaxWidth = basic.SetOpt(maxWidth)
 	}
-	if f.state.MaxHeight.IsSet() {
-		maxHeight := max(minHeight, basic.FloorPoz(f.state.MaxHeight.Get()))
+	if props.MaxHeight.IsSet() {
+		maxHeight := max(minHeight, basic.FloorPoz(props.MaxHeight.Get()))
 		ct.MaxHeight = basic.SetOpt(maxHeight)
 	}
 
-	if f.state.PreWidth.IsSet() {
+	if props.PreWidth.IsSet() {
 		maxWidth := ct.MaxWidth.Or(basic.PosInf())
-		preWidth := basic.FloorPoz(f.state.PreWidth.Get())
+		preWidth := basic.FloorPoz(props.PreWidth.Get())
 		ct.PreWidth = basic.SetOpt(basic.Clamp(preWidth, minWidth, maxWidth))
 	}
-	if f.state.PreHeight.IsSet() {
+	if props.PreHeight.IsSet() {
 		maxHeight := ct.MaxHeight.Or(basic.PosInf())
-		preHeight := basic.FloorPoz(f.state.PreHeight.Get())
+		preHeight := basic.FloorPoz(props.PreHeight.Get())
 		ct.PreHeight = basic.SetOpt(basic.Clamp(preHeight, minHeight, maxHeight))
 	}
 }

@@ -24,35 +24,34 @@ type itemLayout struct {
 }
 
 // Arrange implements the [scene.Element] interface.
-func (o *overlayImpl[S, R]) Arrange() {
+func (o *overlayImpl[S, T]) Arrange(bbox basic.Rect) {
 	ct := &o.containerLayout
 
-	r := o.region.Rect()
-	ct.xOffset = math.Floor(r.Left())
-	ct.xSize = basic.FloorPoz(r.Width())
-	ct.yOffset = math.Floor(r.Top())
-	ct.ySize = basic.FloorPoz(r.Height())
+	ct.xOffset = math.Floor(bbox.Left())
+	ct.xSize = basic.FloorPoz(bbox.Width())
+	ct.yOffset = math.Floor(bbox.Top())
+	ct.ySize = basic.FloorPoz(bbox.Height())
 
 	o.itemLayouts = o.itemLayouts[:0]
 	for i, item := range o.items {
-		if !item.IsActive() {
+		if item.IsOff() {
 			continue
 		}
 
-		state := item.Region().State()
-		outline := item.Outline()
+		trait := item.Trait()
+		attrs := item.Attrs()
 
 		o.itemLayouts = append(o.itemLayouts, itemLayout{})
 		it := &o.itemLayouts[len(o.itemLayouts)-1]
 		it.index = i
 
-		it.x.init(state.Left, state.Right, outline.MinWidth, outline.MaxWidth, outline.PreWidth, ct.xSize)
+		it.x.init(trait.Left, trait.Right, attrs.MinWidth, attrs.MaxWidth, attrs.PreWidth, ct.xSize)
 		it.x.calc()
 
-		it.y.init(state.Top, state.Bottom, outline.MinHeight, outline.MaxHeight, outline.PreHeight, ct.ySize)
+		it.y.init(trait.Top, trait.Bottom, attrs.MinHeight, attrs.MaxHeight, attrs.PreHeight, ct.ySize)
 		it.y.calc()
 
-		item.Region().Arrange(basic.Rect{
+		item.Arrange(basic.Rect{
 			Min: basic.Vec2{
 				ct.xOffset + it.x.offset,
 				ct.yOffset + it.y.offset,
@@ -62,8 +61,6 @@ func (o *overlayImpl[S, R]) Arrange() {
 				it.y.size.final,
 			},
 		})
-
-		item.Arrange()
 	}
 }
 

@@ -22,27 +22,26 @@ type elementLayout struct {
 }
 
 // Arrange implements the [scene.Element] interface.
-func (p *paddingImpl[S, R]) Arrange() {
+func (p *paddingImpl[S, T]) Arrange(bbox basic.Rect) {
 	ct := &p.containerLayout
 
-	r := p.region.Rect()
-	ct.xOffset = math.Floor(r.Left())
-	ct.xSize = basic.FloorPoz(r.Width())
-	ct.yOffset = math.Floor(r.Top())
-	ct.ySize = basic.FloorPoz(r.Height())
+	ct.xOffset = math.Floor(bbox.Left())
+	ct.xSize = basic.FloorPoz(bbox.Width())
+	ct.yOffset = math.Floor(bbox.Top())
+	ct.ySize = basic.FloorPoz(bbox.Height())
 
-	state := p.element.Region().State()
-	outline := p.element.Outline()
+	trait := p.element.Trait()
+	attrs := p.element.Attrs()
 
 	el := &p.elementLayout
 
-	el.x.init(state.Left, state.Right, outline.MinWidth, outline.MaxWidth, ct.xSize)
+	el.x.init(trait.Left, trait.Right, attrs.MinWidth, attrs.MaxWidth, ct.xSize)
 	el.x.calc()
 
-	el.y.init(state.Top, state.Bottom, outline.MinHeight, outline.MaxHeight, ct.ySize)
+	el.y.init(trait.Top, trait.Bottom, attrs.MinHeight, attrs.MaxHeight, ct.ySize)
 	el.y.calc()
 
-	p.element.Region().Arrange(basic.Rect{
+	p.element.Arrange(basic.Rect{
 		Min: basic.Vec2{
 			ct.xOffset + el.x.offset,
 			ct.yOffset + el.y.offset,
@@ -52,8 +51,6 @@ func (p *paddingImpl[S, R]) Arrange() {
 			el.y.size.final,
 		},
 	})
-
-	p.element.Arrange()
 }
 
 // elementAxis contains element properties for one axis (X or Y).

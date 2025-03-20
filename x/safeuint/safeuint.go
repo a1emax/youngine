@@ -5,7 +5,7 @@ import (
 	"github.com/a1emax/youngine/fault"
 )
 
-// Add returns sum of x and y, or false if integer overflow occurred.
+// Add returns x + y, or false if integer overflow occurred.
 func Add[T basic.UnsignedInteger](x, y T) (T, bool) {
 	if x > basic.MaxUint[T]()-y {
 		return 0, false
@@ -24,7 +24,7 @@ func MustAdd[T basic.UnsignedInteger](x, y T) T {
 	return result
 }
 
-// Sub returns difference of x and y, or false if integer overflow occurred.
+// Sub returns x - y, or false if integer overflow occurred.
 func Sub[T basic.UnsignedInteger](x, y T) (T, bool) {
 	if y > x {
 		return 0, false

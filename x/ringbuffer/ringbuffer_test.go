@@ -12,11 +12,11 @@ func TestRingBuffer(t *testing.T) {
 		newElement string // Will not be appended if zero.
 	}
 	tests := []struct {
-		capacity int
-		steps    []step
+		cap   int
+		steps []step
 	}{
 		{
-			capacity: 1,
+			cap: 1,
 			steps: []step{
 				{len: 0, elements: []string{}, newElement: "a"},
 				{len: 1, elements: []string{"a"}, newElement: "b"},
@@ -24,7 +24,7 @@ func TestRingBuffer(t *testing.T) {
 			},
 		},
 		{
-			capacity: 5,
+			cap: 5,
 			steps: []step{
 				{len: 0, elements: []string{}, newElement: "a"},
 				{len: 1, elements: []string{"a"}, newElement: "b"},
@@ -43,8 +43,8 @@ func TestRingBuffer(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(strconv.Itoa(tt.capacity), func(t *testing.T) {
-			b := New[string](tt.capacity)
+		t.Run(strconv.Itoa(tt.cap), func(t *testing.T) {
+			b := New[string](tt.cap)
 			if b.IsNil() {
 				t.Fatalf("new buffer is nil")
 			}

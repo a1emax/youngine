@@ -27,14 +27,23 @@ type keyboardKeyImpl struct {
 
 // NewKeyboardKey initializes and returns new [KeyboardKey] with given code.
 func NewKeyboardKey(code input.KeyboardKeyCode, clk clock.Clock) KeyboardKey {
+	if code < input.MinKeyboardKeyCode || code > input.MaxKeyboardKeyCode {
+		panic(fault.Trace(fault.ErrInvalidArgument))
+	}
 	if clk == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
-	return &keyboardKeyImpl{
-		code:  code,
-		clock: clk,
-	}
+	k := &keyboardKeyImpl{}
+	k.init(code, clk)
+
+	return k
+}
+
+// init initializes [KeyboardKey].
+func (k *keyboardKeyImpl) init(code input.KeyboardKeyCode, clk clock.Clock) {
+	k.code = code
+	k.clock = clk
 }
 
 // Code implements the [input.KeyboardKey] interface.

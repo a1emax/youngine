@@ -74,8 +74,21 @@ const (
 	KeyboardKeyCodeF10
 	KeyboardKeyCodeF11
 	KeyboardKeyCodeF12
+	KeyboardKeyCodeF13
+	KeyboardKeyCodeF14
+	KeyboardKeyCodeF15
+	KeyboardKeyCodeF16
+	KeyboardKeyCodeF17
+	KeyboardKeyCodeF18
+	KeyboardKeyCodeF19
+	KeyboardKeyCodeF20
+	KeyboardKeyCodeF21
+	KeyboardKeyCodeF22
+	KeyboardKeyCodeF23
+	KeyboardKeyCodeF24
 	KeyboardKeyCodeHome
 	KeyboardKeyCodeInsert
+	KeyboardKeyCodeIntlBackslash
 	KeyboardKeyCodeMetaLeft
 	KeyboardKeyCodeMetaRight
 	KeyboardKeyCodeMinus

@@ -5,7 +5,7 @@ import (
 	"github.com/a1emax/youngine/fault"
 )
 
-// Abs returns absolute value of x, or false if integer overflow occurred.
+// Abs returns |x|, or false if integer overflow occurred.
 func Abs[T basic.SignedInteger](x T) (T, bool) {
 	if x >= 0 {
 		return x, true
@@ -30,7 +30,7 @@ func MustAbs[T basic.SignedInteger](x T) T {
 	return result
 }
 
-// Neg returns x with inverted sign, or false if integer overflow occurred.
+// Neg returns -x, or false if integer overflow occurred.
 func Neg[T basic.SignedInteger](x T) (T, bool) {
 	if x >= 0 {
 		return -x, true
@@ -55,7 +55,7 @@ func MustNeg[T basic.SignedInteger](x T) T {
 	return result
 }
 
-// Add returns sum of x and y, or false if integer overflow occurred.
+// Add returns x + y, or false if integer overflow occurred.
 func Add[T basic.SignedInteger](x, y T) (T, bool) {
 	if x == 0 {
 		return y, true
@@ -87,7 +87,7 @@ func MustAdd[T basic.SignedInteger](x, y T) T {
 	return result
 }
 
-// Sub returns difference of x and y, or false if integer overflow occurred.
+// Sub returns x - y, or false if integer overflow occurred.
 func Sub[T basic.SignedInteger](x, y T) (T, bool) {
 	if y == 0 {
 		return x, true

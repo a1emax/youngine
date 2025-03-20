@@ -1,2 +1,2 @@
-// Package scene provides tools for working with GUI.
+// Package scene provides tools for flexible GUI building.
 package scene

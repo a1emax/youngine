@@ -11,8 +11,3 @@ type MouseCursor interface {
 	// Update updates state.
 	Update()
 }
-
-// NewMouseCursor initializes and returns new [MouseCursor].
-func NewMouseCursor() MouseCursor {
-	return &mouseCursorImpl{}
-}

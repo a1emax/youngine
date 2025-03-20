@@ -12,6 +12,18 @@ type mouseCursorImpl struct {
 	isMarked bool
 }
 
+// NewMouseCursor initializes and returns new [MouseCursor].
+func NewMouseCursor() MouseCursor {
+	c := &mouseCursorImpl{}
+	c.init()
+
+	return c
+}
+
+// init initializes [MouseCursor].
+func (c *mouseCursorImpl) init() {
+}
+
 // IsAvailable implements the [input.MouseCursor] interface.
 func (c *mouseCursorImpl) IsAvailable() bool {
 	return false

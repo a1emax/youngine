@@ -5,7 +5,7 @@ import (
 	"unsafe"
 )
 
-// Abs returns absolute value of x.
+// Abs returns |x|.
 func Abs[T SignedNumeric](x T) T {
 	if x < 0 {
 		return -x
@@ -14,7 +14,7 @@ func Abs[T SignedNumeric](x T) T {
 	return x
 }
 
-// Clamp returns x constrained to range from low to high.
+// Clamp returns x constrained to closed interval [low, high].
 func Clamp[T Ordered](x, low, high T) T {
 	return max(low, min(x, high))
 }
@@ -44,6 +44,22 @@ func IsMaxUint[T UnsignedInteger](x T) bool {
 // IsMinInt reports whether x is minimum value representable by type T.
 func IsMinInt[T SignedInteger](x T) bool {
 	return x == MinInt[T]()
+}
+
+// Loop returns x, looped in closed interval [low, high].
+func Loop[T SignedInteger](x, low, high T) T {
+	if high <= low {
+		return low
+	}
+
+	x -= low
+	n := high - low + 1
+
+	if x < 0 {
+		return low + n - (-x-1)%n - 1
+	}
+
+	return low + x%n
 }
 
 // MaxInt returns maximum value representable by type T.
@@ -84,7 +100,7 @@ func Round[T FloatingPoint](x T, n int) T {
 	return T(math.Round(float64(x)*f) / f)
 }
 
-// Sign returns sign of x.
+// Sign returns sign of x, i.e. 1 if x is positive, -1 if it is negative, or 0 if it is zero.
 func Sign[T SignedNumeric](x T) T {
 	if x > 0 {
 		return 1

@@ -118,7 +118,7 @@ func TestSetup__InitPanic(t *testing.T) {
 	}
 }
 
-func TestSetup__PostponedFuncPanic(t *testing.T) {
+func TestSetup__DeferredFuncPanic(t *testing.T) {
 	testErr1 := errors.New("test error 1")
 	testErr2 := errors.New("test error 2")
 
@@ -244,7 +244,7 @@ func TestSetup__DeferAfterSetup(t *testing.T) {
 	teardown()
 }
 
-func TestSetup__PostponeInDispose(t *testing.T) {
+func TestSetup__DeferInDispose(t *testing.T) {
 	var n int
 	teardown, err := Setup(func(lc Lifecycle) error {
 		lc.Defer(func() {

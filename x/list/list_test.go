@@ -10,20 +10,20 @@ func TestList(t *testing.T) {
 		t.Fatalf("new list is nil")
 	}
 
-	{
-		expectedSummary, expectedLen := "", 0
-
+	checkSummaryAndLen := func(l List[string], operation, expectedSummary string, expectedLen int) {
 		gotSummary, gotLen := "", l.Len()
-		for e := l.First(); !e.IsNil(); e = e.Next() {
-			gotSummary += e.Value()
+		for m := l.First(); !m.IsNil(); m = l.Next(m) {
+			gotSummary += l.Get(m)
 		}
 		if gotSummary != expectedSummary {
-			t.Fatalf("wrong initial summary: %q expected, got %q", expectedSummary, gotSummary)
+			t.Fatalf("wrong summary after %s: %q expected, got %q", operation, expectedSummary, gotSummary)
 		}
 		if gotLen != expectedLen {
-			t.Fatalf("wrong initial length: %d expected, got %d", expectedLen, gotLen)
+			t.Fatalf("wrong length after %s: %d expected, got %d", operation, expectedLen, gotLen)
 		}
 	}
+
+	checkSummaryAndLen(l, "initialization", "", 0)
 
 	l.Prepend("A")              // A
 	B := l.Prepend("B")         // BA
@@ -31,90 +31,47 @@ func TestList(t *testing.T) {
 	D := l.InsertAfter(B, "D")  // BDAC
 	E := l.InsertBefore(D, "E") // BEDAC
 
-	{
-		expectedSummary, expectedLen := "BEDAC", 5
+	checkSummaryAndLen(l, "insertion", "BEDAC", 5)
 
-		gotSummary, gotLen := "", l.Len()
-		for e := l.First(); !e.IsNil(); e = e.Next() {
-			gotSummary += e.Value()
+	{
+		expectedValue := "E"
+		gotValue := l.Delete(E) // BDAC
+		if gotValue != expectedValue {
+			t.Fatalf("wrong deleted value: %q expected, got %q", expectedValue, gotValue)
+		}
+	}
+
+	checkSummaryAndLen(l, "deletion", "BDAC", 4)
+
+	{
+		expectedSummary, gotSummary := "CADB", ""
+		for m := l.Last(); !m.IsNil(); m = l.Prev(m) {
+			gotSummary += l.Get(m)
 		}
 		if gotSummary != expectedSummary {
-			t.Fatalf("wrong summary after inserting: %q expected, got %q", expectedSummary, gotSummary)
-		}
-		if gotLen != expectedLen {
-			t.Fatalf("wrong length after inserting: %d expected, got %d", expectedLen, gotLen)
+			t.Fatalf("wrong last-prev summary: %q expected, got %q", expectedSummary, gotSummary)
 		}
 	}
 
-	l.Delete(E) // BDAC
-
 	{
-		expectedSummary, expectedLen := "BDAC", 4
-
-		gotSummary, gotLen := "", l.Len()
-		for e := l.First(); !e.IsNil(); e = e.Next() {
-			gotSummary += e.Value()
+		expectedSummary, gotSummary := "BDAC", ""
+		for value := range l.All() {
+			gotSummary += value
 		}
 		if gotSummary != expectedSummary {
-			t.Fatalf("wrong summary after deleting: %q expected, got %q", expectedSummary, gotSummary)
-		}
-		if gotLen != expectedLen {
-			t.Fatalf("wrong length after deleting: %d expected, got %d", expectedLen, gotLen)
+			t.Fatalf("wrong all summary: %q expected, got %q", expectedSummary, gotSummary)
 		}
 	}
 
 	{
-		index := 1
-		expectedEntry, gotEntry := D, l.Get(index)
-		if gotEntry != expectedEntry {
-			t.Fatalf("wrong entry with index %d: %q expected, got %q",
-				index, expectedEntry.Value(), gotEntry.Value())
-		}
-	}
-
-	{
-		expectedSummary := "CADB"
-
-		var gotSummary string
-		for e := l.Last(); !e.IsNil(); e = e.Prev() {
-			gotSummary += e.Value()
+		expectedSummary, gotSummary := "CADB", ""
+		for value := range l.Backward() {
+			gotSummary += value
 		}
 		if gotSummary != expectedSummary {
-			t.Fatalf("wrong reversed summary: %q expected, got %q", expectedSummary, gotSummary)
+			t.Fatalf("wrong backward summary: %q expected, got %q", expectedSummary, gotSummary)
 		}
 	}
 
-	{
-		expectedSummary, expectedLen := "BDAC", 4
-
-		l := l.ReadOnly()
-
-		gotSummary, gotLen := "", l.Len()
-		for e := l.First(); !e.IsNil(); e = e.Next() {
-			gotSummary += e.Value()
-		}
-		if gotSummary != expectedSummary {
-			t.Fatalf("wrong read-only summary: %q expected, got %q", expectedSummary, gotSummary)
-		}
-		if gotLen != expectedLen {
-			t.Fatalf("wrong read-only length: %d expected, got %d", expectedLen, gotLen)
-		}
-	}
-
-	{
-		expectedSummary, expectedLen := "BDAC", 4
-
-		l := l.Copy()
-
-		gotSummary, gotLen := "", l.Len()
-		for e := l.First(); !e.IsNil(); e = e.Next() {
-			gotSummary += e.Value()
-		}
-		if gotSummary != expectedSummary {
-			t.Fatalf("wrong copy summary: %q expected, got %q", expectedSummary, gotSummary)
-		}
-		if gotLen != expectedLen {
-			t.Fatalf("wrong copy length: %d expected, got %d", expectedLen, gotLen)
-		}
-	}
+	checkSummaryAndLen(l.Copy(), "copying", "BDAC", 4)
 }

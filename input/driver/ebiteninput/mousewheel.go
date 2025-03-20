@@ -23,7 +23,14 @@ type mouseWheelImpl struct {
 
 // NewMouseWheel initializes and returns new [MouseWheel].
 func NewMouseWheel() MouseWheel {
-	return &mouseWheelImpl{}
+	w := &mouseWheelImpl{}
+	w.init()
+
+	return w
+}
+
+// init initializes [MouseWheel].
+func (w *mouseWheelImpl) init() {
 }
 
 // Offset implements the [input.MouseWheel] interface.

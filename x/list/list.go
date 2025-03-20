@@ -1,25 +1,44 @@
 package list
 
 import (
+	"iter"
+
 	"github.com/a1emax/youngine/fault"
 )
 
-// List is doubly linked list of values of type T.
+// List is doubly linked list of elements with values of type T.
+//
+// Values of this type are references to shared internal state. Use the Copy method to make separate copy.
 type List[T any] struct {
 	*listInst[T]
 }
 
-// ReadOnly is [List] with read-only access.
-type ReadOnly[T any] struct {
-	*listInst[T]
+// listInst is the internal state of the [List] type.
+type listInst[T any] struct {
+	first, last *listEntry[T]
+	len         int
 }
 
-// listInst is the internal state of the [List] type (shared between copies).
-//
-// listInst methods do not change it.
-type listInst[T any] struct {
-	first, last Entry[T]
-	len         int
+// listEntry is internal representation of list element.
+type listEntry[T any] struct {
+
+	// list reference is placed here both to avoid dynamic allocations when returning markers
+	// and to make it possible to invalidate them on deletion. But this solution has extra
+	// cost of 8 bytes per entry and requires refactoring if it is possible.
+	list List[T]
+
+	prev, next *listEntry[T]
+	value      T
+}
+
+// Marker of [List] element.
+type Marker[T any] struct {
+	entry *listEntry[T]
+}
+
+// IsNil reports whether marker is nil.
+func (m Marker[T]) IsNil() bool {
+	return m.entry == nil
 }
 
 // New initializes and returns new [List].
@@ -29,26 +48,21 @@ func New[T any]() List[T] {
 	}
 }
 
-// ReadOnly returns list with read-only access.
-func (l List[T]) ReadOnly() ReadOnly[T] {
-	return ReadOnly[T](l)
+// IsNil reports whether list is nil.
+func (l List[T]) IsNil() bool {
+	return l.listInst == nil
 }
 
 // Copy returns copy of list.
-func (l *listInst[T]) Copy() List[T] {
+func (l List[T]) Copy() List[T] {
 	if l.IsNil() {
 		return List[T]{}
 	}
 
 	result := New[T]()
 
-	for e := l.first; !e.IsNil(); e = e.next {
-		result.putLast(Entry[T]{
-			&entryInst[T]{
-				list:  result,
-				value: e.value,
-			},
-		})
+	for entry := l.first; entry != nil; entry = entry.next {
+		result.putLast(result.newEntry(entry.value))
 	}
 
 	result.len = l.len
@@ -56,13 +70,38 @@ func (l *listInst[T]) Copy() List[T] {
 	return result
 }
 
-// IsNil reports whether list is nil.
-func (l *listInst[T]) IsNil() bool {
-	return l == nil
+// All returns iterator that iterates over all elements in direct order, producing their values.
+func (l List[T]) All() iter.Seq[T] {
+	return func(yield func(T) bool) {
+		if l.IsNil() {
+			return
+		}
+
+		for entry := l.first; entry != nil; entry = entry.next {
+			if !yield(entry.value) {
+				break
+			}
+		}
+	}
 }
 
-// Len returns number of entries.
-func (l *listInst[T]) Len() int {
+// Backward returns iterator that iterates over all elements in backward order, producing their values.
+func (l List[T]) Backward() iter.Seq[T] {
+	return func(yield func(T) bool) {
+		if l.IsNil() {
+			return
+		}
+
+		for entry := l.last; entry != nil; entry = entry.prev {
+			if !yield(entry.value) {
+				break
+			}
+		}
+	}
+}
+
+// Len returns number of elements.
+func (l List[T]) Len() int {
 	if l.IsNil() {
 		return 0
 	}
@@ -70,40 +109,82 @@ func (l *listInst[T]) Len() int {
 	return l.len
 }
 
-// First returns the first entry, or nil if list is empty.
-func (l *listInst[T]) First() Entry[T] {
+// First returns marker of the first element, or nil if list is empty.
+func (l List[T]) First() Marker[T] {
 	if l.IsNil() {
-		return Entry[T]{}
+		return Marker[T]{}
 	}
 
-	return l.first
+	return Marker[T]{l.first}
 }
 
-// Last returns the last entry, or nil if the list is empty.
-func (l *listInst[T]) Last() Entry[T] {
+// Last returns marker of the last element, or nil if the list is empty.
+func (l List[T]) Last() Marker[T] {
 	if l.IsNil() {
-		return Entry[T]{}
+		return Marker[T]{}
 	}
 
-	return l.last
+	return Marker[T]{l.last}
 }
 
-// Get returns entry with given index.
-func (l *listInst[T]) Get(index int) Entry[T] {
-	if l.IsNil() || index < 0 || index >= l.len {
-		panic(fault.Trace(fault.ErrIndexOutOfRange))
+// Prev returns marker of element previous to one with given marker.
+func (l List[T]) Prev(marker Marker[T]) Marker[T] {
+	if marker.IsNil() {
+		panic(fault.Trace(fault.ErrNilPointer))
+	}
+	if marker.entry.list != l {
+		panic(fault.Trace(fault.ErrInvalidArgument))
 	}
 
-	entry := l.first
-	for i := 0; i < index; i++ {
-		entry = entry.next
+	if marker.entry.prev == nil {
+		return Marker[T]{}
 	}
 
-	return entry
+	return Marker[T]{marker.entry.prev}
 }
 
-// Prepend inserts new entry containing given value at front of list, and returns it.
-func (l List[T]) Prepend(value T) Entry[T] {
+// Next returns marker of element next to one with given marker.
+func (l List[T]) Next(marker Marker[T]) Marker[T] {
+	if marker.IsNil() {
+		panic(fault.Trace(fault.ErrNilPointer))
+	}
+	if marker.entry.list != l {
+		panic(fault.Trace(fault.ErrInvalidArgument))
+	}
+
+	if marker.entry.next == nil {
+		return Marker[T]{}
+	}
+
+	return Marker[T]{marker.entry.next}
+}
+
+// Get returns value of element with given marker.
+func (l List[T]) Get(marker Marker[T]) T {
+	if marker.IsNil() {
+		panic(fault.Trace(fault.ErrNilPointer))
+	}
+	if marker.entry.list != l {
+		panic(fault.Trace(fault.ErrInvalidArgument))
+	}
+
+	return marker.entry.value
+}
+
+// Set sets given value for element with given marker.
+func (l List[T]) Set(marker Marker[T], value T) {
+	if marker.IsNil() {
+		panic(fault.Trace(fault.ErrNilPointer))
+	}
+	if marker.entry.list != l {
+		panic(fault.Trace(fault.ErrInvalidArgument))
+	}
+
+	marker.entry.value = value
+}
+
+// Prepend inserts new element with given value at front of list, and returns its marker.
+func (l List[T]) Prepend(value T) Marker[T] {
 	if l.IsNil() {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
@@ -113,11 +194,11 @@ func (l List[T]) Prepend(value T) Entry[T] {
 
 	l.len++
 
-	return entry
+	return Marker[T]{entry}
 }
 
-// Append inserts new entry containing given value at back of list, and returns it.
-func (l List[T]) Append(value T) Entry[T] {
+// Append inserts new element with given value at back of list, and returns its marker.
+func (l List[T]) Append(value T) Marker[T] {
 	if l.IsNil() {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
@@ -127,80 +208,82 @@ func (l List[T]) Append(value T) Entry[T] {
 
 	l.len++
 
-	return entry
+	return Marker[T]{entry}
 }
 
-// InsertBefore inserts new entry containing given value before given pivot entry, and returns it.
-func (l List[T]) InsertBefore(pivot Entry[T], value T) Entry[T] {
+// InsertBefore inserts new element with given value before pivot one with given marker, and returns its marker.
+func (l List[T]) InsertBefore(pivot Marker[T], value T) Marker[T] {
 	if l.IsNil() {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 	if pivot.IsNil() {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
-	if pivot.list != l {
+	if pivot.entry.list != l {
 		panic(fault.Trace(fault.ErrInvalidArgument))
 	}
 
 	entry := l.newEntry(value)
-	l.putBefore(pivot, entry)
+	l.putBefore(pivot.entry, entry)
 
 	l.len++
 
-	return entry
+	return Marker[T]{entry}
 }
 
-// InsertAfter inserts new entry containing given value after given pivot entry, and returns it.
-func (l List[T]) InsertAfter(pivot Entry[T], value T) Entry[T] {
+// InsertAfter inserts new element with given value after pivot one with given marker, and returns its marker.
+func (l List[T]) InsertAfter(pivot Marker[T], value T) Marker[T] {
 	if l.IsNil() {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 	if pivot.IsNil() {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
-	if pivot.list != l {
+	if pivot.entry.list != l {
 		panic(fault.Trace(fault.ErrInvalidArgument))
 	}
 
 	entry := l.newEntry(value)
-	l.putAfter(pivot, entry)
+	l.putAfter(pivot.entry, entry)
 
 	l.len++
 
-	return entry
+	return Marker[T]{entry}
 }
 
-// Delete deletes given entry from list.
-func (l List[T]) Delete(entry Entry[T]) {
+// Delete deletes element with given marker from list and returns its value.
+func (l List[T]) Delete(marker Marker[T]) T {
 	if l.IsNil() {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
-	if entry.IsNil() {
+	if marker.IsNil() {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
-	if entry.list != l {
+	if marker.entry.list != l {
 		panic(fault.Trace(fault.ErrInvalidArgument))
 	}
 
-	l.cut(entry)
-	entry.list = List[T]{}
+	value := marker.entry.value
+
+	l.cut(marker.entry)
+	*marker.entry = listEntry[T]{}
 
 	l.len--
+
+	return value
 }
 
-// newEntry initializes and returns new entry of list.
-func (l List[T]) newEntry(value T) Entry[T] {
-	return Entry[T]{
-		&entryInst[T]{
-			list:  l,
-			value: value,
-		},
+// newEntry initializes and returns new entry.
+func (l List[T]) newEntry(value T) *listEntry[T] {
+	return &listEntry[T]{
+		list:  l,
+		value: value,
 	}
 }
 
 // putFirst puts given new entry at front of list.
-func (l List[T]) putFirst(entry Entry[T]) {
-	if l.first.IsNil() {
+func (l List[T]) putFirst(entry *listEntry[T]) {
+	if l.first == nil {
 		l.first = entry
 		l.last = entry
 		// entry.prev = nil
@@ -211,19 +294,19 @@ func (l List[T]) putFirst(entry Entry[T]) {
 }
 
 // putLast puts given new entry at back of list.
-func (l List[T]) putLast(entry Entry[T]) {
-	if l.last.IsNil() {
+func (l List[T]) putLast(entry *listEntry[T]) {
+	if l.last == nil {
 		l.putFirst(entry)
 	} else {
 		l.putAfter(l.last, entry)
 	}
 }
 
-// putBefore puts given entry before given pivot entry.
-func (l List[T]) putBefore(pivot, entry Entry[T]) {
+// putBefore puts given entry before given pivot one.
+func (l List[T]) putBefore(pivot, entry *listEntry[T]) {
 	entry.next = pivot
 
-	if pivot.prev.IsNil() {
+	if pivot.prev == nil {
 		// entry.prev = nil
 		l.first = entry
 	} else {
@@ -234,11 +317,11 @@ func (l List[T]) putBefore(pivot, entry Entry[T]) {
 	pivot.prev = entry
 }
 
-// putAfter puts given entry after given pivot entry.
-func (l List[T]) putAfter(pivot, entry Entry[T]) {
+// putAfter puts given entry after given pivot one.
+func (l List[T]) putAfter(pivot, entry *listEntry[T]) {
 	entry.prev = pivot
 
-	if pivot.next.IsNil() {
+	if pivot.next == nil {
 		// entry.next = nil
 		l.last = entry
 	} else {
@@ -250,19 +333,19 @@ func (l List[T]) putAfter(pivot, entry Entry[T]) {
 }
 
 // cut cuts given entry from list.
-func (l List[T]) cut(entry Entry[T]) {
-	if entry.prev.IsNil() {
+func (l List[T]) cut(entry *listEntry[T]) {
+	if entry.prev == nil {
 		l.first = entry.next
 	} else {
 		entry.prev.next = entry.next
 	}
 
-	if entry.next.IsNil() {
+	if entry.next == nil {
 		l.last = entry.prev
 	} else {
 		entry.next.prev = entry.prev
 	}
 
-	entry.prev = Entry[T]{}
-	entry.next = Entry[T]{}
+	// entry.prev = nil
+	// entry.next = nil
 }

@@ -5,6 +5,39 @@ import (
 	"testing"
 )
 
+func TestVec2Num(t *testing.T) {
+	type args struct {
+		k Float
+	}
+	type want struct {
+		result Vec2
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "1",
+			args: args{
+				k: 1,
+			},
+			want: want{
+				result: Vec2{1, 1},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Vec2Num(tt.args.k)
+			if result != tt.want.result {
+				t.Fatalf("(%s expected, got %s", tt.want.result, result)
+			}
+		})
+	}
+}
+
 func TestVec2_IsZero(t *testing.T) {
 	type args struct {
 		v Vec2
@@ -241,6 +274,41 @@ func TestVec2_Add(t *testing.T) {
 	}
 }
 
+func TestVec2_AddNum(t *testing.T) {
+	type args struct {
+		v Vec2
+		k Float
+	}
+	type want struct {
+		result Vec2
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "(1,2);-10",
+			args: args{
+				v: Vec2{1, 2},
+				k: -10,
+			},
+			want: want{
+				result: Vec2{-9, -8},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.args.v.AddNum(tt.args.k)
+			if result != tt.want.result {
+				t.Fatalf("%s expected, got %s", tt.want.result, result)
+			}
+		})
+	}
+}
+
 func TestVec2_Sub(t *testing.T) {
 	type args struct {
 		v Vec2
@@ -276,7 +344,7 @@ func TestVec2_Sub(t *testing.T) {
 	}
 }
 
-func TestVec2_MulAll(t *testing.T) {
+func TestVec2_SubNum(t *testing.T) {
 	type args struct {
 		v Vec2
 		k Float
@@ -296,14 +364,14 @@ func TestVec2_MulAll(t *testing.T) {
 				k: -10,
 			},
 			want: want{
-				result: Vec2{-10, -20},
+				result: Vec2{11, 12},
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.args.v.MulAll(tt.args.k)
+			result := tt.args.v.SubNum(tt.args.k)
 			if result != tt.want.result {
 				t.Fatalf("%s expected, got %s", tt.want.result, result)
 			}
@@ -346,42 +414,7 @@ func TestVec2_Mul(t *testing.T) {
 	}
 }
 
-func TestVec2_MulMat(t *testing.T) {
-	type args struct {
-		v Vec2
-		m Mat2
-	}
-	type want struct {
-		result Vec2
-	}
-	tests := []struct {
-		name string
-		args args
-		want want
-	}{
-		{
-			name: "(5,6);((1,2),(3,4))",
-			args: args{
-				v: Vec2{5, 6},
-				m: Mat2{{1, 2}, {3, 4}},
-			},
-			want: want{
-				result: Vec2{17, 39},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := tt.args.v.MulMat(tt.args.m)
-			if result != tt.want.result {
-				t.Fatalf("(%g expected, got %g", tt.want.result, result)
-			}
-		})
-	}
-}
-
-func TestVec2_DivAll(t *testing.T) {
+func TestVec2_MulNum(t *testing.T) {
 	type args struct {
 		v Vec2
 		k Float
@@ -395,30 +428,20 @@ func TestVec2_DivAll(t *testing.T) {
 		want want
 	}{
 		{
-			name: "(2,4);2",
-			args: args{
-				v: Vec2{2, 4},
-				k: 2,
-			},
-			want: want{
-				result: Vec2{1, 2},
-			},
-		},
-		{
-			name: "(1,2);0",
+			name: "(1,2);-10",
 			args: args{
 				v: Vec2{1, 2},
-				k: 0,
+				k: -10,
 			},
 			want: want{
-				result: Vec2{math.Inf(1), math.Inf(1)},
+				result: Vec2{-10, -20},
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.args.v.DivAll(tt.args.k)
+			result := tt.args.v.MulNum(tt.args.k)
 			if result != tt.want.result {
 				t.Fatalf("%s expected, got %s", tt.want.result, result)
 			}
@@ -481,7 +504,87 @@ func TestVec2_Div(t *testing.T) {
 	}
 }
 
-func TestVec2_ModAll(t *testing.T) {
+func TestVec2_DivNum(t *testing.T) {
+	type args struct {
+		v Vec2
+		k Float
+	}
+	type want struct {
+		result Vec2
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "(2,4);2",
+			args: args{
+				v: Vec2{2, 4},
+				k: 2,
+			},
+			want: want{
+				result: Vec2{1, 2},
+			},
+		},
+		{
+			name: "(1,2);0",
+			args: args{
+				v: Vec2{1, 2},
+				k: 0,
+			},
+			want: want{
+				result: Vec2{math.Inf(1), math.Inf(1)},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.args.v.DivNum(tt.args.k)
+			if result != tt.want.result {
+				t.Fatalf("%s expected, got %s", tt.want.result, result)
+			}
+		})
+	}
+}
+
+func TestVec2_Mod(t *testing.T) {
+	type args struct {
+		v Vec2
+		w Vec2
+	}
+	type want struct {
+		result Vec2
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "(10,18);(3,4)",
+			args: args{
+				v: Vec2{10, 18},
+				w: Vec2{3, 4},
+			},
+			want: want{
+				result: Vec2{1, 2},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.args.v.Mod(tt.args.w)
+			if result != tt.want.result {
+				t.Fatalf("%s expected, got %s", tt.want.result, result)
+			}
+		})
+	}
+}
+
+func TestVec2_ModNum(t *testing.T) {
 	type args struct {
 		v Vec2
 		k Float
@@ -508,7 +611,7 @@ func TestVec2_ModAll(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.args.v.ModAll(tt.args.k)
+			result := tt.args.v.ModNum(tt.args.k)
 			if result != tt.want.result {
 				t.Fatalf("%s expected, got %s", tt.want.result, result)
 			}
@@ -516,46 +619,12 @@ func TestVec2_ModAll(t *testing.T) {
 	}
 }
 
-func TestVec2_Mod(t *testing.T) {
+func TestVec2_Cross(t *testing.T) {
 	type args struct {
 		v Vec2
 		w Vec2
 	}
 	type want struct {
-		result Vec2
-	}
-	tests := []struct {
-		name string
-		args args
-		want want
-	}{
-		{
-			name: "(10,11);(3,4)",
-			args: args{
-				v: Vec2{10, 11},
-				w: Vec2{3, 4},
-			},
-			want: want{
-				result: Vec2{1, 3},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := tt.args.v.Mod(tt.args.w)
-			if result != tt.want.result {
-				t.Fatalf("%s expected, got %s", tt.want.result, result)
-			}
-		})
-	}
-}
-
-func TestVec2_Mag(t *testing.T) {
-	type args struct {
-		v Vec2
-	}
-	type want struct {
 		result Float
 	}
 	tests := []struct {
@@ -564,62 +633,31 @@ func TestVec2_Mag(t *testing.T) {
 		want want
 	}{
 		{
-			name: "(3,4)",
+			name: "(1,2);(10,-20)",
 			args: args{
-				v: Vec2{3, 4},
+				v: Vec2{1, 2},
+				w: Vec2{10, -20},
 			},
 			want: want{
-				result: 5,
+				result: -40,
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.args.v.Mag()
+			result := tt.args.v.Cross(tt.args.w)
 			if result != tt.want.result {
-				t.Fatalf("(%g expected, got %g", tt.want.result, result)
+				t.Fatalf("%g expected, got %g", tt.want.result, result)
 			}
 		})
 	}
 }
 
-func TestVec2_MagSqr(t *testing.T) {
+func TestVec2_CrossNormal(t *testing.T) {
 	type args struct {
-		v Vec2
-	}
-	type want struct {
-		result Float
-	}
-	tests := []struct {
-		name string
-		args args
-		want want
-	}{
-		{
-			name: "(3,4)",
-			args: args{
-				v: Vec2{3, 4},
-			},
-			want: want{
-				result: 25,
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := tt.args.v.MagSqr()
-			if result != tt.want.result {
-				t.Fatalf("(%g expected, got %g", tt.want.result, result)
-			}
-		})
-	}
-}
-
-func TestVec2_Normalize(t *testing.T) {
-	type args struct {
-		v Vec2
+		v  Vec2
+		wZ Float
 	}
 	type want struct {
 		result Vec2
@@ -630,21 +668,22 @@ func TestVec2_Normalize(t *testing.T) {
 		want want
 	}{
 		{
-			name: "(3,4)",
+			name: "(1,2);-10",
 			args: args{
-				v: Vec2{3, 4},
+				v:  Vec2{1, 2},
+				wZ: -10,
 			},
 			want: want{
-				result: Vec2{0.6000000000000001, 0.8},
+				result: Vec2{-20, 10},
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.args.v.Normalize()
+			result := tt.args.v.CrossNormal(tt.args.wZ)
 			if result != tt.want.result {
-				t.Fatalf("(%g expected, got %g", tt.want.result, result)
+				t.Fatalf("%g expected, got %g", tt.want.result, result)
 			}
 		})
 	}
@@ -685,45 +724,9 @@ func TestVec2_Dot(t *testing.T) {
 	}
 }
 
-func TestVec2_CrossZ(t *testing.T) {
-	type args struct {
-		v  Vec2
-		wZ Float
-	}
-	type want struct {
-		result Vec2
-	}
-	tests := []struct {
-		name string
-		args args
-		want want
-	}{
-		{
-			name: "(1,2);-10",
-			args: args{
-				v:  Vec2{1, 2},
-				wZ: -10,
-			},
-			want: want{
-				result: Vec2{-20, 10},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := tt.args.v.CrossZ(tt.args.wZ)
-			if result != tt.want.result {
-				t.Fatalf("%g expected, got %g", tt.want.result, result)
-			}
-		})
-	}
-}
-
-func TestVec2_Cross(t *testing.T) {
+func TestVec2_L1Norm(t *testing.T) {
 	type args struct {
 		v Vec2
-		w Vec2
 	}
 	type want struct {
 		result Float
@@ -734,22 +737,155 @@ func TestVec2_Cross(t *testing.T) {
 		want want
 	}{
 		{
-			name: "(1,2);(10,-20)",
+			name: "(-3,4)",
 			args: args{
-				v: Vec2{1, 2},
-				w: Vec2{10, -20},
+				v: Vec2{-3, 4},
 			},
 			want: want{
-				result: -40,
+				result: 7,
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.args.v.Cross(tt.args.w)
+			result := tt.args.v.L1Norm()
 			if result != tt.want.result {
-				t.Fatalf("%g expected, got %g", tt.want.result, result)
+				t.Fatalf("(%g expected, got %g", tt.want.result, result)
+			}
+		})
+	}
+}
+
+func TestVec2_L2Norm(t *testing.T) {
+	type args struct {
+		v Vec2
+	}
+	type want struct {
+		result Float
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "(-3,4)",
+			args: args{
+				v: Vec2{-3, 4},
+			},
+			want: want{
+				result: 5,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.args.v.L2Norm()
+			if result != tt.want.result {
+				t.Fatalf("(%g expected, got %g", tt.want.result, result)
+			}
+		})
+	}
+}
+
+func TestVec2_L2NormSqr(t *testing.T) {
+	type args struct {
+		v Vec2
+	}
+	type want struct {
+		result Float
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "(-3,4)",
+			args: args{
+				v: Vec2{-3, 4},
+			},
+			want: want{
+				result: 25,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.args.v.L2NormSqr()
+			if result != tt.want.result {
+				t.Fatalf("(%g expected, got %g", tt.want.result, result)
+			}
+		})
+	}
+}
+
+func TestVec2_Normalize(t *testing.T) {
+	type args struct {
+		v Vec2
+	}
+	type want struct {
+		result Vec2
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "(3,4)",
+			args: args{
+				v: Vec2{3, 4},
+			},
+			want: want{
+				result: Vec2{0.6000000000000001, 0.8},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.args.v.Normalize()
+			if result != tt.want.result {
+				t.Fatalf("(%g expected, got %g", tt.want.result, result)
+			}
+		})
+	}
+}
+
+func TestVec2_TimesMat(t *testing.T) {
+	type args struct {
+		v Vec2
+		m Mat2
+	}
+	type want struct {
+		result Vec2
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "(5,6);((1,2),(3,4))",
+			args: args{
+				v: Vec2{5, 6},
+				m: Mat2{{1, 2}, {3, 4}},
+			},
+			want: want{
+				result: Vec2{17, 39},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.args.v.TimesMat(tt.args.m)
+			if result != tt.want.result {
+				t.Fatalf("(%g expected, got %g", tt.want.result, result)
 			}
 		})
 	}

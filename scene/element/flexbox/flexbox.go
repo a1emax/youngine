@@ -5,62 +5,51 @@ import (
 	"github.com/a1emax/youngine/scene"
 )
 
-// Flexbox placed on screen of type S inside region of type R.
-type Flexbox[S any, R scene.Region] interface {
-	scene.Element[S, R]
+// Flexbox displayed on screen of type S and extended by trait of type T.
+type Flexbox[S, T any] interface {
+	scene.Element[S, T]
 }
 
-// Config configures [Flexbox].
-type Config struct {
+// Props associated with [Flexbox].
+type Props struct {
+	scene.Attrs
 
-	// StateFunc accepts current state and returns new one.
-	StateFunc func(state State) State
-}
-
-// State is changeable state of [Flexbox].
-type State struct {
-
-	// IsInactive specifies whether element is inactive.
-	IsInactive bool
-
-	// Outline specifies base outline of element.
-	scene.Outline
+	// AlignItems specifies alignment of items on container's cross axis.
+	AlignItems Align
 
 	// Direction specifies how items are placed in container defining main axis.
 	Direction Direction
 
 	// JustifyContent specifies how to distribute space between and around items along container's main axis.
 	JustifyContent Justify
+}
 
-	// AlignItems specifies alignment of items on container's cross axis.
-	AlignItems Align
+// Func returns these props.
+func (p Props) Func(Props) Props {
+	return p
 }
 
 // flexboxImpl is the implementation of the [Flexbox] interface.
-type flexboxImpl[S any, R scene.Region] struct {
-	scene.BaseElement[S, R]
-	Config
+type flexboxImpl[S, T any] struct {
+	scene.BaseElement[S, T, Props]
 
-	region R
-	state  State
-	items  []Item[S]
-
-	outline         scene.Outline
+	attrs           scene.Attrs
 	containerLayout containerLayout
+	items           []Item[S]
 	itemLayouts     []itemLayout
 }
 
 // New initializes and returns new [Flexbox].
-func New[S any, R scene.Region](region R, config Config, items ...Item[S]) Flexbox[S, R] {
-	if config.StateFunc == nil {
+func New[S, T any](traitFunc scene.TraitFunc[T], propsFunc scene.PropsFunc[Props], items ...Item[S]) Flexbox[S, T] {
+	if traitFunc == nil {
+		panic(fault.Trace(fault.ErrNilPointer))
+	}
+	if propsFunc == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
-	f := &flexboxImpl[S, R]{
-		Config: config,
-
-		region: region,
-	}
+	f := &flexboxImpl[S, T]{}
+	f.Init(traitFunc, propsFunc)
 
 	f.items = make([]Item[S], 0, len(items))
 	for _, item := range items {
@@ -76,54 +65,43 @@ func New[S any, R scene.Region](region R, config Config, items ...Item[S]) Flexb
 	return f
 }
 
-// Region implements the [scene.Element] interface.
-func (f *flexboxImpl[S, R]) Region() R {
-	return f.region
-}
-
-// IsActive implements the [scene.Element] interface.
-func (f *flexboxImpl[S, R]) IsActive() bool {
-	return !f.state.IsInactive
-}
-
-// Outline implements the [scene.Element] interface.
-func (f *flexboxImpl[S, R]) Outline() scene.Outline {
-	return f.outline
+// Attrs implements the [scene.Element] interface.
+func (f *flexboxImpl[S, T]) Attrs() scene.Attrs {
+	return f.attrs
 }
 
 // Refresh implements the [scene.Element] interface.
-func (f *flexboxImpl[S, R]) Refresh() {
-	f.state = f.StateFunc(f.state)
-	f.outline = scene.Outline{}
+func (f *flexboxImpl[S, T]) Refresh() {
+	f.BaseElement.Refresh()
+	f.attrs = scene.Attrs{}
 
 	for _, item := range f.items {
-		item.Region().Refresh()
 		item.Refresh()
 	}
 }
 
 // Exclude implements the [scene.Element] interface.
-func (f *flexboxImpl[S, R]) Exclude() {
+func (f *flexboxImpl[S, T]) Exclude() {
 	for _, item := range f.items {
 		item.Exclude()
 	}
 }
 
 // Actuate implements the [scene.Element] interface.
-func (f *flexboxImpl[S, R]) Actuate() {
+func (f *flexboxImpl[S, T]) Actuate() {
 	for i := len(f.items) - 1; i >= 0; i-- {
 		item := f.items[i]
 
-		if item.IsActive() {
-			item.Actuate()
-		} else {
+		if item.IsOff() {
 			item.Inhibit()
+		} else {
+			item.Actuate()
 		}
 	}
 }
 
 // Inhibit implements the [scene.Element] interface.
-func (f *flexboxImpl[S, R]) Inhibit() {
+func (f *flexboxImpl[S, T]) Inhibit() {
 	for i := len(f.items) - 1; i >= 0; i-- {
 		item := f.items[i]
 
@@ -132,9 +110,9 @@ func (f *flexboxImpl[S, R]) Inhibit() {
 }
 
 // Update implements the [scene.Element] interface.
-func (f *flexboxImpl[S, R]) Update() {
+func (f *flexboxImpl[S, T]) Update() {
 	for _, item := range f.items {
-		if !item.IsActive() {
+		if item.IsOff() {
 			continue
 		}
 
@@ -143,9 +121,9 @@ func (f *flexboxImpl[S, R]) Update() {
 }
 
 // Draw implements the [scene.Element] interface.
-func (f *flexboxImpl[S, R]) Draw(screen S) {
+func (f *flexboxImpl[S, T]) Draw(screen S) {
 	for _, item := range f.items {
-		if !item.IsActive() {
+		if item.IsOff() {
 			continue
 		}
 
@@ -154,7 +132,7 @@ func (f *flexboxImpl[S, R]) Draw(screen S) {
 }
 
 // Dispose implements the [scene.Element] interface.
-func (f *flexboxImpl[S, R]) Dispose() {
+func (f *flexboxImpl[S, T]) Dispose() {
 	for _, item := range f.items {
 		item.Dispose()
 	}

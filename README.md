@@ -11,9 +11,8 @@
 ## Features
 
 Core packages:
-* **[scene](https://pkg.go.dev/github.com/a1emax/youngine/scene)** is for working with GUI.
-* **[input](https://pkg.go.dev/github.com/a1emax/youngine/input)** is for input handling,
-  divided into state access protocol and hierarchical event generation.
+* **[scene](https://pkg.go.dev/github.com/a1emax/youngine/scene)** is for flexible GUI building.
+* **[input](https://pkg.go.dev/github.com/a1emax/youngine/input)** is for customizable input handling.
 * **[clock](https://pkg.go.dev/github.com/a1emax/youngine/clock)** is for working with logical time.
 * **[asset](https://pkg.go.dev/github.com/a1emax/youngine/asset)** is for concurrent-safe asset loading.
 
@@ -21,7 +20,7 @@ See [documentation](https://pkg.go.dev/github.com/a1emax/youngine) for details.
 
 ## How to use
 
-See [demo project](https://github.com/a1emax/dragon).
+See [Yo App](https://github.com/a1emax/yo-app).
 
 ## Licence
 

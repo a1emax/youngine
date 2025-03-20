@@ -61,57 +61,59 @@ type itemLayout struct {
 }
 
 // Arrange implements the [scene.Element] interface.
-func (f *flexboxImpl[S, R]) Arrange() {
+func (f *flexboxImpl[S, T]) Arrange(bbox basic.Rect) {
+	props := f.Props()
+
 	ct := &f.containerLayout
 
-	switch r := f.region.Rect(); f.state.Direction {
+	switch props.Direction {
 	default: // DirectionRow or invalid:
-		ct.mainOffset = math.Floor(r.Left())
-		ct.mainSize = basic.FloorPoz(r.Width())
-		ct.crossOffset = math.Floor(r.Top())
-		ct.crossSize = basic.FloorPoz(r.Height())
+		ct.mainOffset = math.Floor(bbox.Left())
+		ct.mainSize = basic.FloorPoz(bbox.Width())
+		ct.crossOffset = math.Floor(bbox.Top())
+		ct.crossSize = basic.FloorPoz(bbox.Height())
 	case DirectionColumn:
-		ct.mainOffset = math.Floor(r.Top())
-		ct.mainSize = basic.FloorPoz(r.Height())
-		ct.crossOffset = math.Floor(r.Left())
-		ct.crossSize = basic.FloorPoz(r.Width())
+		ct.mainOffset = math.Floor(bbox.Top())
+		ct.mainSize = basic.FloorPoz(bbox.Height())
+		ct.crossOffset = math.Floor(bbox.Left())
+		ct.crossSize = basic.FloorPoz(bbox.Width())
 	}
 
 	var mainHypotSum basic.Float
 
 	f.itemLayouts = f.itemLayouts[:0]
 	for i, item := range f.items {
-		if !item.IsActive() {
+		if item.IsOff() {
 			continue
 		}
 
-		state := item.Region().State()
-		outline := item.Outline()
+		trait := item.Trait()
+		attrs := item.Attrs()
 
 		f.itemLayouts = append(f.itemLayouts, itemLayout{})
 		it := &f.itemLayouts[len(f.itemLayouts)-1]
 		it.index = i
 
-		it.basis = state.Basis
-		it.grow = basic.Poz(state.Grow.Or(1))
-		it.shrink = basic.Poz(state.Shrink.Or(1))
-		it.alignSelf = state.AlignSelf
+		it.basis = trait.Basis
+		it.grow = basic.Poz(trait.Grow.Or(1))
+		it.shrink = basic.Poz(trait.Shrink.Or(1))
+		it.alignSelf = trait.AlignSelf
 
-		switch f.state.Direction {
+		switch props.Direction {
 		default: // DirectionRow or invalid:
-			it.mainSize.min = basic.FloorPoz(outline.MinWidth.Or(0))
-			it.mainSize.max = basic.FloorPoz(outline.MaxWidth.Or(basic.PosInf()))
-			it.mainSize.pre = outline.PreWidth
-			it.crossSize.min = basic.FloorPoz(outline.MinHeight.Or(0))
-			it.crossSize.max = basic.FloorPoz(outline.MaxHeight.Or(basic.PosInf()))
-			it.crossSize.pre = outline.PreHeight
+			it.mainSize.min = basic.FloorPoz(attrs.MinWidth.Or(0))
+			it.mainSize.max = basic.FloorPoz(attrs.MaxWidth.Or(basic.PosInf()))
+			it.mainSize.pre = attrs.PreWidth
+			it.crossSize.min = basic.FloorPoz(attrs.MinHeight.Or(0))
+			it.crossSize.max = basic.FloorPoz(attrs.MaxHeight.Or(basic.PosInf()))
+			it.crossSize.pre = attrs.PreHeight
 		case DirectionColumn:
-			it.mainSize.min = basic.FloorPoz(outline.MinHeight.Or(0))
-			it.mainSize.max = basic.FloorPoz(outline.MaxHeight.Or(basic.PosInf()))
-			it.mainSize.pre = outline.PreHeight
-			it.crossSize.min = basic.FloorPoz(outline.MinWidth.Or(0))
-			it.crossSize.max = basic.FloorPoz(outline.MaxWidth.Or(basic.PosInf()))
-			it.crossSize.pre = outline.PreWidth
+			it.mainSize.min = basic.FloorPoz(attrs.MinHeight.Or(0))
+			it.mainSize.max = basic.FloorPoz(attrs.MaxHeight.Or(basic.PosInf()))
+			it.mainSize.pre = attrs.PreHeight
+			it.crossSize.min = basic.FloorPoz(attrs.MinWidth.Or(0))
+			it.crossSize.max = basic.FloorPoz(attrs.MaxWidth.Or(basic.PosInf()))
+			it.crossSize.pre = attrs.PreWidth
 		}
 
 		it.mainSize.max = max(it.mainSize.min, it.mainSize.max)
@@ -252,27 +254,34 @@ func (f *flexboxImpl[S, R]) Arrange() {
 	// Remaining free space is non-negative here.
 	var mainSpacing basic.Float
 	var mainOffset basic.Float
-	if n := len(f.itemLayouts); n > 0 {
-		switch f.state.JustifyContent {
-		default: // JustifyStart or invalid:
-			mainSpacing = 0
-			mainOffset = 0
-		case JustifyCenter:
-			mainSpacing = 0
-			mainOffset = math.Floor(remainingFreeMainSpace / 2)
-		case JustifyEnd:
-			mainSpacing = 0
-			mainOffset = remainingFreeMainSpace
-		case JustifySpaceBetween:
+	switch props.JustifyContent {
+	default: // JustifyStart or invalid:
+		mainSpacing = 0
+		mainOffset = 0
+	case JustifyCenter:
+		mainSpacing = 0
+		mainOffset = math.Floor(remainingFreeMainSpace / 2)
+	case JustifyEnd:
+		mainSpacing = 0
+		mainOffset = remainingFreeMainSpace
+	case JustifySpaceBetween:
+		if n := len(f.itemLayouts); n > 1 {
 			mainSpacing = math.Floor(remainingFreeMainSpace / basic.Float(n-1))
-			mainOffset = 0
-		case JustifySpaceAround:
-			mainSpacing = math.Floor(remainingFreeMainSpace / basic.Float(n))
-			mainOffset = math.Floor(mainSpacing / 2)
-		case JustifySpaceEvenly:
-			mainSpacing = math.Floor(remainingFreeMainSpace / basic.Float(n+1))
-			mainOffset = mainSpacing
+		} else {
+			mainSpacing = 0
 		}
+		mainOffset = 0
+	case JustifySpaceAround:
+		if n := len(f.itemLayouts); n > 0 {
+			mainSpacing = math.Floor(remainingFreeMainSpace / basic.Float(n))
+		} else {
+			mainSpacing = 0
+		}
+		mainOffset = math.Floor(mainSpacing / 2)
+	case JustifySpaceEvenly:
+		n := len(f.itemLayouts)
+		mainSpacing = math.Floor(remainingFreeMainSpace / basic.Float(n+1))
+		mainOffset = mainSpacing
 	}
 
 	for i := range f.itemLayouts {
@@ -285,7 +294,7 @@ func (f *flexboxImpl[S, R]) Arrange() {
 		if it.crossSize.forceStretch {
 			align = AlignStretch
 		} else {
-			align = it.alignSelf.Or(f.state.AlignItems)
+			align = it.alignSelf.Or(props.AlignItems)
 		}
 
 		var crossSize basic.Float
@@ -306,11 +315,9 @@ func (f *flexboxImpl[S, R]) Arrange() {
 			it.crossOffset = ct.crossSize - it.crossSize.final
 		}
 
-		item := f.items[it.index]
-
-		switch f.state.Direction {
+		switch props.Direction {
 		default: // DirectionRow or invalid:
-			item.Region().Arrange(basic.Rect{
+			f.items[it.index].Arrange(basic.Rect{
 				Min: basic.Vec2{
 					ct.mainOffset + it.mainOffset,
 					ct.crossOffset + it.crossOffset,
@@ -321,7 +328,7 @@ func (f *flexboxImpl[S, R]) Arrange() {
 				},
 			})
 		case DirectionColumn:
-			item.Region().Arrange(basic.Rect{
+			f.items[it.index].Arrange(basic.Rect{
 				Min: basic.Vec2{
 					ct.crossOffset + it.crossOffset,
 					ct.mainOffset + it.mainOffset,
@@ -332,7 +339,5 @@ func (f *flexboxImpl[S, R]) Arrange() {
 				},
 			})
 		}
-
-		item.Arrange()
 	}
 }

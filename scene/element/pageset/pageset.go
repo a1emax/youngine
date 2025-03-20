@@ -1,88 +1,82 @@
 package pageset
 
 import (
+	"github.com/a1emax/youngine/basic"
 	"github.com/a1emax/youngine/fault"
 	"github.com/a1emax/youngine/scene"
 )
 
-// PageSet placed on screen ot type S inside region or type R.
-type PageSet[S any, R scene.Region] interface {
-	scene.Element[S, R]
+// PageSet displayed on screen ot type S and extended by trait or type T.
+type PageSet[S, T any] interface {
+	scene.Element[S, T]
 }
 
-// Config configures [PageSet].
-type Config struct {
-
-	// StateFunc accepts current state and returns new one.
-	StateFunc func(state State) State
-}
-
-// State is changeable state of [Overlay].
-type State struct {
+// Props associated with [PageSet].
+type Props struct {
 
 	// Page specifies index of current page.
 	Page int
 }
 
-// pageSetImpl is the implementation of the [PageSet] interface.
-type pageSetImpl[S any, R scene.Region] struct {
-	scene.BaseElement[S, R]
-	Config
+// Func returns these props.
+func (p Props) Func(Props) Props {
+	return p
+}
 
-	region R
-	state  State
-	pages  []Page[S]
+// pageSetImpl is the implementation of the [PageSet] interface.
+type pageSetImpl[S, T any] struct {
+	scene.BaseElement[S, T, Props]
+
+	pages []Page[S]
 }
 
 // New initializes and returns new [PageSet].
-func New[S any, R scene.Region](region R, config Config, pages ...Page[S]) PageSet[S, R] {
-	if config.StateFunc == nil {
+func New[S, T any](traitFunc scene.TraitFunc[T], propsFunc scene.PropsFunc[Props], pages ...Page[S]) PageSet[S, T] {
+	if traitFunc == nil {
+		panic(fault.Trace(fault.ErrNilPointer))
+	}
+	if propsFunc == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
-	pagesCopy := make([]Page[S], 0, len(pages))
+	p := &pageSetImpl[S, T]{}
+	p.Init(traitFunc, propsFunc)
+
+	p.pages = make([]Page[S], 0, len(pages))
 	for _, page := range pages {
 		if page == nil {
 			panic(fault.Trace(fault.ErrNilPointer))
 		}
 
-		pagesCopy = append(pagesCopy, page)
+		p.pages = append(p.pages, page)
 	}
 
-	return &pageSetImpl[S, R]{
-		Config: config,
-
-		region: region,
-		pages:  pagesCopy,
-	}
+	return p
 }
 
-// Region implements the [scene.Element] interface.
-func (p *pageSetImpl[S, R]) Region() R {
-	return p.region
-}
-
-// IsActive implements the [scene.Element] interface.
-func (p *pageSetImpl[S, R]) IsActive() bool {
-	if p.state.Page < 0 || p.state.Page >= len(p.pages) {
-		return false
+// IsOff implements the [scene.Element] interface.
+func (p *pageSetImpl[S, T]) IsOff() bool {
+	pi := p.Props().Page
+	if pi < 0 || pi >= len(p.pages) {
+		return true
 	}
 
-	return p.pages[p.state.Page].IsActive()
+	return p.pages[pi].IsOff()
 }
 
-// Outline implements the [scene.Element] interface.
-func (p *pageSetImpl[S, R]) Outline() scene.Outline {
-	if p.state.Page < 0 || p.state.Page >= len(p.pages) {
-		return scene.Outline{}
+// Attrs implements the [scene.Element] interface.
+func (p *pageSetImpl[S, T]) Attrs() scene.Attrs {
+	pi := p.Props().Page
+	if pi < 0 || pi >= len(p.pages) {
+		return scene.Attrs{}
 	}
 
-	return p.pages[p.state.Page].Outline()
+	return p.pages[pi].Attrs()
 }
 
 // Refresh implements the [scene.Element] interface.
-func (p *pageSetImpl[S, R]) Refresh() {
-	p.state = p.StateFunc(p.state)
+func (p *pageSetImpl[S, T]) Refresh() {
+	p.BaseElement.Refresh()
 
 	for _, page := range p.pages {
 		page.Refresh()
@@ -90,9 +84,10 @@ func (p *pageSetImpl[S, R]) Refresh() {
 }
 
 // Prepare implements the [scene.Element] interface.
-func (p *pageSetImpl[S, R]) Prepare() {
+func (p *pageSetImpl[S, T]) Prepare() {
+	pi := p.Props().Page
 	for i, page := range p.pages {
-		if i == p.state.Page {
+		if i == pi {
 			page.Prepare()
 		} else {
 			page.Exclude()
@@ -101,27 +96,27 @@ func (p *pageSetImpl[S, R]) Prepare() {
 }
 
 // Exclude implements the [scene.Element] interface.
-func (p *pageSetImpl[S, R]) Exclude() {
+func (p *pageSetImpl[S, T]) Exclude() {
 	for _, page := range p.pages {
 		page.Exclude()
 	}
 }
 
 // Arrange implements the [scene.Element] interface.
-func (p *pageSetImpl[S, R]) Arrange() {
-	if p.state.Page < 0 || p.state.Page >= len(p.pages) {
+func (p *pageSetImpl[S, T]) Arrange(bbox basic.Rect) {
+	pi := p.Props().Page
+	if pi < 0 || pi >= len(p.pages) {
 		return
 	}
 
-	page := p.pages[p.state.Page]
-	page.Region().Arrange(p.region.Rect())
-	page.Arrange()
+	p.pages[pi].Arrange(bbox)
 }
 
 // Actuate implements the [scene.Element] interface.
-func (p *pageSetImpl[S, R]) Actuate() {
+func (p *pageSetImpl[S, T]) Actuate() {
+	pi := p.Props().Page
 	for i, page := range p.pages {
-		if i == p.state.Page {
+		if i == pi {
 			page.Actuate()
 		} else {
 			page.Inhibit()
@@ -130,32 +125,34 @@ func (p *pageSetImpl[S, R]) Actuate() {
 }
 
 // Inhibit implements the [scene.Element] interface.
-func (p *pageSetImpl[S, R]) Inhibit() {
+func (p *pageSetImpl[S, T]) Inhibit() {
 	for _, page := range p.pages {
 		page.Inhibit()
 	}
 }
 
 // Update implements the [scene.Element] interface.
-func (p *pageSetImpl[S, R]) Update() {
-	if p.state.Page < 0 || p.state.Page >= len(p.pages) {
+func (p *pageSetImpl[S, T]) Update() {
+	pi := p.Props().Page
+	if pi < 0 || pi >= len(p.pages) {
 		return
 	}
 
-	p.pages[p.state.Page].Update()
+	p.pages[pi].Update()
 }
 
 // Draw implements the [scene.Element] interface.
-func (p *pageSetImpl[S, R]) Draw(screen S) {
-	if p.state.Page < 0 || p.state.Page >= len(p.pages) {
+func (p *pageSetImpl[S, T]) Draw(screen S) {
+	pi := p.Props().Page
+	if pi < 0 || pi >= len(p.pages) {
 		return
 	}
 
-	p.pages[p.state.Page].Draw(screen)
+	p.pages[pi].Draw(screen)
 }
 
 // Dispose implements the [scene.Element] interface.
-func (p *pageSetImpl[S, R]) Dispose() {
+func (p *pageSetImpl[S, T]) Dispose() {
 	for _, page := range p.pages {
 		page.Dispose()
 	}

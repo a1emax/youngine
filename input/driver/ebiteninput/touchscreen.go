@@ -27,9 +27,15 @@ func NewTouchscreen(clk clock.Clock) Touchscreen {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
-	return &touchscreenImpl{
-		helper: newTouchscreenHelper(clk),
-	}
+	t := &touchscreenImpl{}
+	t.init(clk)
+
+	return t
+}
+
+// init initializes [Touchscreen].
+func (t *touchscreenImpl) init(clk clock.Clock) {
+	t.helper = newTouchscreenHelper(clk)
 }
 
 // TouchCount implements the [input.Touchscreen] interface.

@@ -13,13 +13,13 @@ type Controller[B any] interface {
 // ControllerConfig configures [Controller].
 type ControllerConfig[B any] struct {
 
-	// Wheel state.
-	Wheel input.MouseWheel
+	// Input state.
+	Input input.MouseWheel
 
 	// OnScroll, if specified, is called on [ScrollEvent].
 	OnScroll func(event ScrollEvent[B])
 
-	// Slave, if specified, is actuated if wheel is scrolled, or inhibited otherwise.
+	// Slave, if specified, is actuated if wheel scroll is detected, or inhibited otherwise.
 	Slave input.Controller[Background[B]]
 }
 
@@ -30,7 +30,7 @@ type controllerImpl[B any] struct {
 
 // NewController initializes and returns new [Controller].
 func NewController[B any](config ControllerConfig[B]) Controller[B] {
-	if config.Wheel == nil {
+	if config.Input == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
@@ -41,15 +41,15 @@ func NewController[B any](config ControllerConfig[B]) Controller[B] {
 
 // Actuate implements the [input.Controller] interface.
 func (c *controllerImpl[B]) Actuate(background B) {
-	if c.Wheel.IsMarked() {
+	if c.Input.IsMarked() {
 		c.Inhibit()
 
 		return
 	}
 
-	c.Wheel.Mark()
+	c.Input.Mark()
 
-	wheelOffset := c.Wheel.Offset()
+	wheelOffset := c.Input.Offset()
 	if wheelOffset.IsZero() {
 		c.Inhibit()
 

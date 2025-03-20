@@ -15,28 +15,25 @@ type Controller[B any] interface {
 // ControllerConfig configures [Controller].
 type ControllerConfig[B any] struct {
 
-	// Touchscreen state.
-	Touchscreen input.Touchscreen
-
 	// Clock representing time.
 	Clock clock.Clock
+
+	// Input state.
+	Input input.Touchscreen
 
 	// HitTest, if specified, restricts active area touch is being handled inside.
 	HitTest func(position basic.Vec2) bool
 
-	// OnStart, if specified, is called on [StartEvent].
-	OnStart func(event StartEvent[B])
+	// OnDown, if specified, is called on [DownEvent].
+	OnDown func(event DownEvent[B])
 
 	// OnHover, if specified, is called on [HoverEvent].
 	OnHover func(event HoverEvent[B])
 
-	// OnEnd, if specified, is called on [EndEvent].
-	OnEnd func(event EndEvent[B])
+	// OnUp, if specified, is called on [UpEvent].
+	OnUp func(event UpEvent)
 
-	// OnGone, if specified, is called on [GoneEvent].
-	OnGone func(event GoneEvent)
-
-	// Slave, if specified, is actuated if touch is inside active area, or inhibited otherwise.
+	// Slave, if specified, is actuated if touch is detected, or inhibited otherwise.
 	Slave input.Controller[Background[B]]
 }
 
@@ -44,16 +41,16 @@ type ControllerConfig[B any] struct {
 type controllerImpl[B any] struct {
 	ControllerConfig[B]
 
-	touchDetectedAt clock.Time
-	touchID         input.TouchscreenTouchID // Valid only if touchDetectedAt is not zero.
+	detectedAt clock.Time
+	id         input.TouchscreenTouchID // Valid only if detectedAt is not zero.
 }
 
 // NewController initializes and returns new [Controller].
 func NewController[B any](config ControllerConfig[B]) Controller[B] {
-	if config.Touchscreen == nil {
+	if config.Clock == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
-	if config.Clock == nil {
+	if config.Input == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
@@ -64,24 +61,24 @@ func NewController[B any](config ControllerConfig[B]) Controller[B] {
 
 // Actuate implements the [input.Controller] interface.
 func (c *controllerImpl[B]) Actuate(background B) {
-	var prevTouchFound bool
+	var detectedFound bool
 	var touch input.TouchscreenTouch
-	var touchID input.TouchscreenTouchID
-	var touchPosition basic.Vec2
-	for i, n := 0, c.Touchscreen.TouchCount(); i < n; i++ {
-		currentTouch := c.Touchscreen.Touch(i)
+	var id input.TouchscreenTouchID
+	var position basic.Vec2
+	for i, n := 0, c.Input.TouchCount(); i < n; i++ {
+		currentTouch := c.Input.Touch(i)
 
-		currentTouchID := currentTouch.ID()
-		if !c.touchDetectedAt.IsZero() && currentTouchID == c.touchID {
-			prevTouchFound = true
+		currentID := currentTouch.ID()
+		if !c.detectedAt.IsZero() && currentID == c.id {
+			detectedFound = true
 		}
 
 		if currentTouch.IsMarked() {
 			continue
 		}
 
-		currentTouchPosition := currentTouch.Position()
-		if c.HitTest != nil && !c.HitTest(currentTouchPosition) {
+		currentPosition := currentTouch.Position()
+		if c.HitTest != nil && !c.HitTest(currentPosition) {
 			continue
 		}
 
@@ -93,30 +90,24 @@ func (c *controllerImpl[B]) Actuate(background B) {
 		}
 
 		touch = currentTouch
-		touchID = currentTouchID
-		touchPosition = currentTouchPosition
+		id = currentID
+		position = currentPosition
 	}
 
-	finish := func() {
-		if prevTouchFound {
-			if c.OnGone != nil {
-				c.OnGone(GoneEvent{})
-			}
-		} else {
-			if c.OnEnd != nil {
-				c.OnEnd(EndEvent[B]{
-					Background: background,
-				})
-			}
+	up := func() {
+		if c.OnUp != nil {
+			c.OnUp(UpEvent{
+				JustEnded: !detectedFound,
+			})
 		}
 
-		c.touchDetectedAt = clock.Time{}
-		c.touchID = 0
+		c.detectedAt = clock.Time{}
+		c.id = 0
 	}
 
 	if touch == nil {
-		if !c.touchDetectedAt.IsZero() {
-			finish()
+		if !c.detectedAt.IsZero() {
+			up()
 		}
 
 		if c.Slave != nil {
@@ -129,55 +120,57 @@ func (c *controllerImpl[B]) Actuate(background B) {
 	touch.Mark()
 
 	// Check for different touch.
-	if !c.touchDetectedAt.IsZero() && touchID != c.touchID {
-		finish()
+	if !c.detectedAt.IsZero() && id != c.id {
+		up()
 	}
 
 	now := c.Clock.Now()
 
-	var touchDuration clock.Ticks
-	if c.touchDetectedAt.IsZero() {
-		c.touchDetectedAt = now
-		c.touchID = touchID
+	var duration clock.Ticks
+	if c.detectedAt.IsZero() {
+		c.detectedAt = now
+		c.id = id
 
-		if touch.StartedAt() == now {
-			if c.OnStart != nil {
-				c.OnStart(StartEvent[B]{
-					Background: background,
-				})
-			}
+		if c.OnDown != nil {
+			c.OnDown(DownEvent[B]{
+				Background:  background,
+				JustStarted: touch.StartedAt() == now,
+				Position:    position,
+			})
 		}
 	} else {
-		touchDuration = now.Sub(c.touchDetectedAt)
+		duration = now.Sub(c.detectedAt)
 	}
-	touchDuration++ // Starts from 1.
+	duration++ // Starts from 1.
 
 	if c.OnHover != nil {
 		c.OnHover(HoverEvent[B]{
 			Background: background,
-			Duration:   touchDuration,
-			Position:   touchPosition,
+			Duration:   duration,
+			Position:   position,
 		})
 	}
 
 	if c.Slave != nil {
 		c.Slave.Actuate(Background[B]{
 			Background: background,
-			Duration:   touchDuration,
-			Position:   touchPosition,
+			Duration:   duration,
+			Position:   position,
 		})
 	}
 }
 
 // Inhibit implements the [input.Controller] interface.
 func (c *controllerImpl[B]) Inhibit() {
-	if !c.touchDetectedAt.IsZero() {
-		if c.OnGone != nil {
-			c.OnGone(GoneEvent{})
+	if !c.detectedAt.IsZero() {
+		if c.OnUp != nil {
+			c.OnUp(UpEvent{
+				JustEnded: false,
+			})
 		}
 
-		c.touchDetectedAt = clock.Time{}
-		c.touchID = 0
+		c.detectedAt = clock.Time{}
+		c.id = 0
 	}
 
 	if c.Slave != nil {

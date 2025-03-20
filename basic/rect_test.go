@@ -5,6 +5,51 @@ import (
 	"testing"
 )
 
+func TestRectBtw(t *testing.T) {
+	type args struct {
+		p0 Vec2
+		p1 Vec2
+	}
+	type want struct {
+		result Rect
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "(0,0);(0,0)",
+			args: args{
+				p0: Vec2{0, 0},
+				p1: Vec2{0, 0},
+			},
+			want: want{
+				result: Rect{Vec2{0, 0}, Vec2{0, 0}},
+			},
+		},
+		{
+			name: "(1,20);(10,2)",
+			args: args{
+				p0: Vec2{1, 20},
+				p1: Vec2{10, 2},
+			},
+			want: want{
+				result: Rect{Vec2{1, 2}, Vec2{9, 18}},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := RectBtw(tt.args.p0, tt.args.p1)
+			if result != tt.want.result {
+				t.Fatalf("%s expected, got %s", tt.want.result, result)
+			}
+		})
+	}
+}
+
 func TestRect_Image(t *testing.T) {
 	type args struct {
 		r Rect
@@ -329,48 +374,6 @@ func TestRect_Height(t *testing.T) {
 	}
 }
 
-func TestRect_Inner(t *testing.T) {
-	type args struct {
-		r Rect
-	}
-	type want struct {
-		result Rect
-	}
-	tests := []struct {
-		name string
-		args args
-		want want
-	}{
-		{
-			name: "(0,0)+(0,0)",
-			args: args{
-				r: Rect{Vec2{0, 0}, Vec2{0, 0}},
-			},
-			want: want{
-				result: Rect{Vec2{0, 0}, Vec2{0, 0}},
-			},
-		},
-		{
-			name: "(1,2)+(10,20)",
-			args: args{
-				r: Rect{Vec2{1, 2}, Vec2{10, 20}},
-			},
-			want: want{
-				result: Rect{Vec2{0, 0}, Vec2{10, 20}},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := tt.args.r.Inner()
-			if result != tt.want.result {
-				t.Fatalf("%s expected, got %s", tt.want.result, result)
-			}
-		})
-	}
-}
-
 func TestRect_Contains(t *testing.T) {
 	type args struct {
 		r Rect
@@ -476,6 +479,158 @@ func TestRect_Contains(t *testing.T) {
 	}
 }
 
+func TestRect_Inner(t *testing.T) {
+	type args struct {
+		r Rect
+	}
+	type want struct {
+		result Rect
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "(0,0)+(0,0)",
+			args: args{
+				r: Rect{Vec2{0, 0}, Vec2{0, 0}},
+			},
+			want: want{
+				result: Rect{Vec2{0, 0}, Vec2{0, 0}},
+			},
+		},
+		{
+			name: "(1,2)+(10,20)",
+			args: args{
+				r: Rect{Vec2{1, 2}, Vec2{10, 20}},
+			},
+			want: want{
+				result: Rect{Vec2{0, 0}, Vec2{10, 20}},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.args.r.Inner()
+			if result != tt.want.result {
+				t.Fatalf("%s expected, got %s", tt.want.result, result)
+			}
+		})
+	}
+}
+
+func TestRect_Move(t *testing.T) {
+	type args struct {
+		r Rect
+		d Vec2
+	}
+	type want struct {
+		result Rect
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "(1,2)+(10,20);(0,0)",
+			args: args{
+				r: Rect{Vec2{1, 2}, Vec2{10, 20}},
+				d: Vec2{0, 0},
+			},
+			want: want{
+				result: Rect{Vec2{1, 2}, Vec2{10, 20}},
+			},
+		},
+		{
+			name: "(1,2)+(10,20);(3,5)",
+			args: args{
+				r: Rect{Vec2{1, 2}, Vec2{10, 20}},
+				d: Vec2{3, 5},
+			},
+			want: want{
+				result: Rect{Vec2{4, 7}, Vec2{10, 20}},
+			},
+		},
+		{
+			name: "(1,2)+(10,20);(-3,-5)",
+			args: args{
+				r: Rect{Vec2{1, 2}, Vec2{10, 20}},
+				d: Vec2{-3, -5},
+			},
+			want: want{
+				result: Rect{Vec2{-2, -3}, Vec2{10, 20}},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.args.r.Move(tt.args.d)
+			if result != tt.want.result {
+				t.Fatalf("(%s expected, got %s", tt.want.result, result)
+			}
+		})
+	}
+}
+
+func TestRect_MoveNum(t *testing.T) {
+	type args struct {
+		r Rect
+		d Float
+	}
+	type want struct {
+		result Rect
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "(1,2)+(10,20);0",
+			args: args{
+				r: Rect{Vec2{1, 2}, Vec2{10, 20}},
+				d: 0,
+			},
+			want: want{
+				result: Rect{Vec2{1, 2}, Vec2{10, 20}},
+			},
+		},
+		{
+			name: "(1,2)+(10,20);3",
+			args: args{
+				r: Rect{Vec2{1, 2}, Vec2{10, 20}},
+				d: 3,
+			},
+			want: want{
+				result: Rect{Vec2{4, 5}, Vec2{10, 20}},
+			},
+		},
+		{
+			name: "(1,2)+(10,20);-3",
+			args: args{
+				r: Rect{Vec2{1, 2}, Vec2{10, 20}},
+				d: -3,
+			},
+			want: want{
+				result: Rect{Vec2{-2, -1}, Vec2{10, 20}},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.args.r.MoveNum(tt.args.d)
+			if result != tt.want.result {
+				t.Fatalf("(%s expected, got %s", tt.want.result, result)
+			}
+		})
+	}
+}
+
 func TestRect_Overlaps(t *testing.T) {
 	type args struct {
 		r Rect
@@ -576,6 +731,149 @@ func TestRect_Overlaps(t *testing.T) {
 			result := tt.args.r.Overlaps(tt.args.s)
 			if result != tt.want.result {
 				t.Fatalf("(%t expected, got %t", tt.want.result, result)
+			}
+		})
+	}
+}
+
+func TestRect_Resize(t *testing.T) {
+	type args struct {
+		r Rect
+		d Vec2
+	}
+	type want struct {
+		result Rect
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "(1,2)+(10,20);(0,0)",
+			args: args{
+				r: Rect{Vec2{1, 2}, Vec2{10, 20}},
+				d: Vec2{0, 0},
+			},
+			want: want{
+				result: Rect{Vec2{1, 2}, Vec2{10, 20}},
+			},
+		},
+		{
+			name: "(1,2)+(10,20);(3,5)",
+			args: args{
+				r: Rect{Vec2{1, 2}, Vec2{10, 20}},
+				d: Vec2{3, 5},
+			},
+			want: want{
+				result: Rect{Vec2{-2, -3}, Vec2{16, 30}},
+			},
+		},
+		{
+			name: "(1,2)+(10,20);(-3,-5)",
+			args: args{
+				r: Rect{Vec2{1, 2}, Vec2{10, 20}},
+				d: Vec2{-3, -5},
+			},
+			want: want{
+				result: Rect{Vec2{4, 7}, Vec2{4, 10}},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.args.r.Resize(tt.args.d)
+			if result != tt.want.result {
+				t.Fatalf("(%s expected, got %s", tt.want.result, result)
+			}
+		})
+	}
+}
+
+func TestRect_ResizeNum(t *testing.T) {
+	type args struct {
+		r Rect
+		d Float
+	}
+	type want struct {
+		result Rect
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "(1,2)+(10,20);0",
+			args: args{
+				r: Rect{Vec2{1, 2}, Vec2{10, 20}},
+				d: 0,
+			},
+			want: want{
+				result: Rect{Vec2{1, 2}, Vec2{10, 20}},
+			},
+		},
+		{
+			name: "(1,2)+(10,20);3",
+			args: args{
+				r: Rect{Vec2{1, 2}, Vec2{10, 20}},
+				d: 3,
+			},
+			want: want{
+				result: Rect{Vec2{-2, -1}, Vec2{16, 26}},
+			},
+		},
+		{
+			name: "(1,2)+(10,20);-3",
+			args: args{
+				r: Rect{Vec2{1, 2}, Vec2{10, 20}},
+				d: -3,
+			},
+			want: want{
+				result: Rect{Vec2{4, 5}, Vec2{4, 14}},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.args.r.ResizeNum(tt.args.d)
+			if result != tt.want.result {
+				t.Fatalf("(%s expected, got %s", tt.want.result, result)
+			}
+		})
+	}
+}
+
+func TestRect_Square(t *testing.T) {
+	type args struct {
+		r Rect
+	}
+	type want struct {
+		result Float
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "(1,2)+(10,20)",
+			args: args{
+				r: Rect{Vec2{1, 2}, Vec2{10, 20}},
+			},
+			want: want{
+				result: 200,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.args.r.Square()
+			if result != tt.want.result {
+				t.Fatalf("(%g expected, got %g", tt.want.result, result)
 			}
 		})
 	}

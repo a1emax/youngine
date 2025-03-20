@@ -16,9 +16,9 @@ type Mouse interface {
 
 // mouseImpl is the implementation of the [Mouse] interface.
 type mouseImpl struct {
-	buttons [input.MouseButtonCount]MouseButton
-	cursor  MouseCursor
-	wheel   MouseWheel
+	buttons [input.MouseButtonCount]mouseButtonImpl
+	cursor  mouseCursorImpl
+	wheel   mouseWheelImpl
 }
 
 // NewMouse initializes and returns new [Mouse].
@@ -28,14 +28,18 @@ func NewMouse(clk clock.Clock) Mouse {
 	}
 
 	m := &mouseImpl{}
-
-	for i := range m.buttons {
-		m.buttons[i] = NewMouseButton(input.MouseButtonCode(i+1), clk)
-	}
-	m.cursor = NewMouseCursor()
-	m.wheel = NewMouseWheel()
+	m.init(clk)
 
 	return m
+}
+
+// init initializes [Mouse].
+func (m *mouseImpl) init(clk clock.Clock) {
+	for i := range m.buttons {
+		m.buttons[i].init(input.MouseButtonCode(i+1), clk)
+	}
+	m.cursor.init()
+	m.wheel.init()
 }
 
 // Button implements the [input.Mouse] interface.
@@ -44,17 +48,17 @@ func (m *mouseImpl) Button(code input.MouseButtonCode) input.MouseButton {
 		panic(fault.Trace(fault.ErrInvalidArgument))
 	}
 
-	return m.buttons[code-1]
+	return &m.buttons[code-1]
 }
 
 // Cursor implements the [input.Mouse] interface.
 func (m *mouseImpl) Cursor() input.MouseCursor {
-	return m.cursor
+	return &m.cursor
 }
 
 // Wheel implements the [input.Mouse] interface.
 func (m *mouseImpl) Wheel() input.MouseWheel {
-	return m.wheel
+	return &m.wheel
 }
 
 // Mark implements the [input.Mouse] interface.

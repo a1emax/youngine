@@ -5,53 +5,42 @@ import (
 	"github.com/a1emax/youngine/scene"
 )
 
-// Overlay placed on screen of type S inside region of type R.
-type Overlay[S any, R scene.Region] interface {
-	scene.Element[S, R]
+// Overlay displayed on screen of type S and extended by trait of type T.
+type Overlay[S, T any] interface {
+	scene.Element[S, T]
 }
 
-// Config configures [Overlay].
-type Config struct {
-
-	// StateFunc accepts current state and returns new one.
-	StateFunc func(state State) State
+// Props associated with [Overlay].
+type Props struct {
+	scene.Attrs
 }
 
-// State is changeable state of [Overlay].
-type State struct {
-
-	// IsInactive specifies whether element is inactive.
-	IsInactive bool
-
-	// Outline specifies base outline of element.
-	scene.Outline
+// Func returns these props.
+func (p Props) Func(Props) Props {
+	return p
 }
 
 // overlayImpl is the implementation of the [Overlay] interface.
-type overlayImpl[S any, R scene.Region] struct {
-	scene.BaseElement[S, R]
-	Config
+type overlayImpl[S, T any] struct {
+	scene.BaseElement[S, T, Props]
 
-	region R
-	state  State
-	items  []Item[S]
-
-	outline         scene.Outline
+	attrs           scene.Attrs
 	containerLayout containerLayout
+	items           []Item[S]
 	itemLayouts     []itemLayout
 }
 
 // New initializes and returns new [Overlay].
-func New[S any, R scene.Region](region R, config Config, items ...Item[S]) Overlay[S, R] {
-	if config.StateFunc == nil {
+func New[S, T any](traitFunc scene.TraitFunc[T], propsFunc scene.PropsFunc[Props], items ...Item[S]) Overlay[S, T] {
+	if traitFunc == nil {
+		panic(fault.Trace(fault.ErrNilPointer))
+	}
+	if propsFunc == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
-	o := &overlayImpl[S, R]{
-		Config: config,
-
-		region: region,
-	}
+	o := &overlayImpl[S, T]{}
+	o.Init(traitFunc, propsFunc)
 
 	o.items = make([]Item[S], 0, len(items))
 	for _, item := range items {
@@ -67,54 +56,43 @@ func New[S any, R scene.Region](region R, config Config, items ...Item[S]) Overl
 	return o
 }
 
-// Region implements the [scene.Element] interface.
-func (o *overlayImpl[S, R]) Region() R {
-	return o.region
-}
-
-// IsActive implements the [scene.Element] interface.
-func (o *overlayImpl[S, R]) IsActive() bool {
-	return !o.state.IsInactive
-}
-
-// Outline implements the [scene.Element] interface.
-func (o *overlayImpl[S, R]) Outline() scene.Outline {
-	return o.outline
+// Attrs implements the [scene.Element] interface.
+func (o *overlayImpl[S, T]) Attrs() scene.Attrs {
+	return o.attrs
 }
 
 // Refresh implements the [scene.Element] interface.
-func (o *overlayImpl[S, R]) Refresh() {
-	o.state = o.StateFunc(o.state)
-	o.outline = scene.Outline{}
+func (o *overlayImpl[S, T]) Refresh() {
+	o.BaseElement.Refresh()
+	o.attrs = scene.Attrs{}
 
 	for _, item := range o.items {
-		item.Region().Refresh()
 		item.Refresh()
 	}
 }
 
 // Exclude implements the [scene.Element] interface.
-func (o *overlayImpl[S, R]) Exclude() {
+func (o *overlayImpl[S, T]) Exclude() {
 	for _, item := range o.items {
 		item.Exclude()
 	}
 }
 
 // Actuate implements the [scene.Element] interface.
-func (o *overlayImpl[S, R]) Actuate() {
+func (o *overlayImpl[S, T]) Actuate() {
 	for i := len(o.items) - 1; i >= 0; i-- {
 		item := o.items[i]
 
-		if item.IsActive() {
-			item.Actuate()
-		} else {
+		if item.IsOff() {
 			item.Inhibit()
+		} else {
+			item.Actuate()
 		}
 	}
 }
 
 // Inhibit implements the [scene.Element] interface.
-func (o *overlayImpl[S, R]) Inhibit() {
+func (o *overlayImpl[S, T]) Inhibit() {
 	for i := len(o.items) - 1; i >= 0; i-- {
 		item := o.items[i]
 
@@ -123,9 +101,9 @@ func (o *overlayImpl[S, R]) Inhibit() {
 }
 
 // Update implements the [scene.Element] interface.
-func (o *overlayImpl[S, R]) Update() {
+func (o *overlayImpl[S, T]) Update() {
 	for _, item := range o.items {
-		if !item.IsActive() {
+		if item.IsOff() {
 			continue
 		}
 
@@ -134,9 +112,9 @@ func (o *overlayImpl[S, R]) Update() {
 }
 
 // Draw implements the [scene.Element] interface.
-func (o *overlayImpl[S, R]) Draw(screen S) {
+func (o *overlayImpl[S, T]) Draw(screen S) {
 	for _, item := range o.items {
-		if !item.IsActive() {
+		if item.IsOff() {
 			continue
 		}
 
@@ -145,7 +123,7 @@ func (o *overlayImpl[S, R]) Draw(screen S) {
 }
 
 // Dispose implements the [scene.Element] interface.
-func (o *overlayImpl[S, R]) Dispose() {
+func (o *overlayImpl[S, T]) Dispose() {
 	for _, item := range o.items {
 		item.Dispose()
 	}

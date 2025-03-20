@@ -21,8 +21,3 @@ const (
 func (d Direction) IsValid() bool {
 	return d >= minDirection && d <= maxDirection
 }
-
-// IsDefault reports whether value is default or invalid.
-func (d Direction) IsDefault() bool {
-	return d == minDirection || !d.IsValid()
-}

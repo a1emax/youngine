@@ -31,7 +31,7 @@ type loaderImpl struct {
 	entries  map[string]*loaderEntry
 }
 
-// loaderEntry represents state of asset loading.
+// loaderEntry is internal representation of loaded asset.
 type loaderEntry struct {
 	kind    Kind // does not change
 	rc      int  // protected by loaderImpl.mu

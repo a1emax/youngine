@@ -40,8 +40,3 @@ const (
 func (j Justify) IsValid() bool {
 	return j >= minJustify && j <= maxJustify
 }
-
-// IsDefault reports whether value is default or invalid.
-func (j Justify) IsDefault() bool {
-	return j == minJustify || !j.IsValid()
-}

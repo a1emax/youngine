@@ -27,14 +27,23 @@ type mouseButtonImpl struct {
 
 // NewMouseButton initializes and returns new [MouseButton] with given code.
 func NewMouseButton(code input.MouseButtonCode, clk clock.Clock) MouseButton {
+	if code < input.MinMouseButtonCode || code > input.MaxMouseButtonCode {
+		panic(fault.Trace(fault.ErrInvalidArgument))
+	}
 	if clk == nil {
 		panic(fault.Trace(fault.ErrNilPointer))
 	}
 
-	return &mouseButtonImpl{
-		code:  code,
-		clock: clk,
-	}
+	b := &mouseButtonImpl{}
+	b.init(code, clk)
+
+	return b
+}
+
+// init initializes [MouseButton].
+func (b *mouseButtonImpl) init(code input.MouseButtonCode, clk clock.Clock) {
+	b.code = code
+	b.clock = clk
 }
 
 // Code implements the [input.MouseButton] interface.
